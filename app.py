@@ -209,7 +209,7 @@ def aggregate_providers():
         filepath = os.path.join(PROVIDERS_DIR, 'providers.json')
         
         if not os.path.exists(filepath):
-            return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}}})
+            return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}, 'cash': {}}})
         
         with open(filepath, 'r') as jsonfile:
             providers = json.load(jsonfile)
@@ -217,7 +217,8 @@ def aggregate_providers():
         # Aggregate allocations
         aggregated = {
             'equity': {},
-            'fixed_income': {}
+            'fixed_income': {},
+            'cash': {}
         }
         
         for provider in providers:
@@ -234,6 +235,15 @@ def aggregate_providers():
                     aggregated['fixed_income'][key] += value
                 else:
                     aggregated['fixed_income'][key] = value
+            
+            # Aggregate cash allocations
+            for key, value_obj in provider.get('allocation', {}).get('cash', {}).items():
+                if isinstance(value_obj, dict) and 'amount' in value_obj:
+                    amount = value_obj['amount']
+                    if key in aggregated['cash']:
+                        aggregated['cash'][key] += amount
+                    else:
+                        aggregated['cash'][key] = amount
         
         return jsonify({'success': True, 'allocation': aggregated})
     

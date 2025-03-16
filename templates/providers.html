@@ -201,6 +201,43 @@
                             <div class="col-md-4">Grand Total: <span class="provider-grand-total">$0</span></div>
                         </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <h4>Cash Allocation ($)</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm input-grid cash-allocation-grid">
+                                <thead>
+                                    <tr>
+                                        <th>Cash Type</th>
+                                        <th>Amount ($)</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Cash</th>
+                                        <td><input type="number" min="0" class="form-control cash-cell" data-type="cash"></td>
+                                        <td><input type="text" class="form-control cash-notes" data-type="cash" placeholder="e.g., Checking account"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Money Market</th>
+                                        <td><input type="number" min="0" class="form-control cash-cell" data-type="money_market"></td>
+                                        <td><input type="text" class="form-control cash-notes" data-type="money_market" placeholder="e.g., Goldman Sachs MM Fund"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Other Liquid Assets</th>
+                                        <td><input type="number" min="0" class="form-control cash-cell" data-type="other_liquid"></td>
+                                        <td><input type="text" class="form-control cash-notes" data-type="other_liquid" placeholder="e.g., T-Bills, CDs"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Cash</th>
+                                        <td class="text-end fw-bold cash-total">$0</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -243,7 +280,8 @@
                     name: providerName,
                     allocation: {
                         equity: {}, // Will store values like {small_growth: 1000}
-                        fixed_income: {} // Will store values like {short_low: 500}
+                        fixed_income: {}, // Will store values like {short_low: 500}
+                        cash: {} // New field for cash allocations
                     }
                 };
                 
@@ -270,23 +308,44 @@
                 providerCard.querySelector('.provider-name').textContent = provider.name;
                 
                 // Add event listeners for inputs
-                providerCard.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(input => {
+                providerCard.querySelectorAll('.equity-cell, .fixed-income-cell, .cash-cell').forEach(input => {
                     input.addEventListener('input', function() {
                         updateProviderTotals(providerCard);
                         updateProviderAllocation(provider.id);
                     });
                     
                     // Set initial values if they exist
-                    const type = input.classList.contains('equity-cell') ? 'equity' : 'fixed_income';
-                    const row = input.dataset.row;
-                    const col = input.dataset.col;
-                    const key = `${row}_${col}`;
+                    const type = input.classList.contains('equity-cell') ? 'equity' : 
+                                input.classList.contains('fixed-income-cell') ? 'fixed_income' : 'cash';
                     
-                    if (type === 'equity' && provider.allocation.equity[key]) {
-                        input.value = provider.allocation.equity[key];
-                    } else if (type === 'fixed_income' && provider.allocation.fixed_income[key]) {
-                        input.value = provider.allocation.fixed_income[key];
+                    if (type === 'equity' || type === 'fixed_income') {
+                        const row = input.dataset.row;
+                        const col = input.dataset.col;
+                        const key = `${row}_${col}`;
+                        
+                        if (type === 'equity' && provider.allocation.equity[key]) {
+                            input.value = provider.allocation.equity[key];
+                        } else if (type === 'fixed_income' && provider.allocation.fixed_income[key]) {
+                            input.value = provider.allocation.fixed_income[key];
+                        }
+                    } else if (type === 'cash') {
+                        const cashType = input.dataset.type;
+                        if (provider.allocation.cash[cashType]) {
+                            input.value = provider.allocation.cash[cashType].amount;
+                        }
                     }
+                });
+                
+                // Set initial values for cash notes
+                providerCard.querySelectorAll('.cash-notes').forEach(input => {
+                    const cashType = input.dataset.type;
+                    if (provider.allocation.cash[cashType] && provider.allocation.cash[cashType].notes) {
+                        input.value = provider.allocation.cash[cashType].notes;
+                    }
+                    
+                    input.addEventListener('input', function() {
+                        updateProviderAllocation(provider.id);
+                    });
                 });
                 
                 // Add remove event listener
@@ -357,8 +416,16 @@
                 providerCard.querySelector('.fixed-grand-total').textContent = formatCurrency(fixedIncomeTotal);
                 providerCard.querySelector('.total-fixed-income').textContent = formatCurrency(fixedIncomeTotal);
                 
+                // Calculate cash total
+                let cashTotal = 0;
+                providerCard.querySelectorAll('.cash-cell').forEach(cell => {
+                    cashTotal += Number(cell.value) || 0;
+                });
+                
+                providerCard.querySelector('.cash-total').textContent = formatCurrency(cashTotal);
+                
                 // Set overall grand total
-                const grandTotal = equityTotal + fixedIncomeTotal;
+                const grandTotal = equityTotal + fixedIncomeTotal + cashTotal;
                 providerCard.querySelector('.provider-grand-total').textContent = formatCurrency(grandTotal);
             }
 
@@ -392,6 +459,23 @@
                     if (value > 0) {
                         const key = `${row}_${col}`;
                         provider.allocation.fixed_income[key] = value;
+                    }
+                });
+                
+                // Update cash allocation
+                provider.allocation.cash = {};
+                providerCard.querySelectorAll('.cash-cell').forEach(cell => {
+                    const cashType = cell.dataset.type;
+                    const value = Number(cell.value) || 0;
+                    
+                    if (value > 0) {
+                        const notesField = providerCard.querySelector(`.cash-notes[data-type="${cashType}"]`);
+                        const notes = notesField ? notesField.value : '';
+                        
+                        provider.allocation.cash[cashType] = {
+                            amount: value,
+                            notes: notes
+                        };
                     }
                 });
                 

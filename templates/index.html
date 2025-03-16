@@ -237,11 +237,44 @@
                             </div>
                         </div>
                         
+                        <div class="mb-3">
+                            <h4>Cash Allocation ($) <small class="text-muted">(Aggregated from providers - <a href="/providers">Provider Allocations</a>)</small></h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm input-grid" id="cash-allocation-grid">
+                                    <thead>
+                                        <tr>
+                                            <th>Cash Type</th>
+                                            <th>Amount ($)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>Cash</th>
+                                            <td><input type="number" min="0" class="form-control cash-cell" data-type="cash" readonly></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Money Market</th>
+                                            <td><input type="number" min="0" class="form-control cash-cell" data-type="money_market" readonly></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Other Liquid Assets</th>
+                                            <td><input type="number" min="0" class="form-control cash-cell" data-type="other_liquid" readonly></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total</th>
+                                            <td class="text-end fw-bold" id="cash-grand-total">$0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
                         <div class="mb-3 totals">
                             <div class="row">
-                                <div class="col-md-4">Equity: <span id="total-equity">$0</span></div>
-                                <div class="col-md-4">Fixed Income: <span id="total-fixed-income">$0</span></div>
-                                <div class="col-md-4">Grand Total: <span id="allocation-grand-total">$0</span></div>
+                                <div class="col-md-3">Equity: <span id="total-equity">$0</span></div>
+                                <div class="col-md-3">Fixed Income: <span id="total-fixed-income">$0</span></div>
+                                <div class="col-md-3">Cash: <span id="total-cash">$0</span></div>
+                                <div class="col-md-3">Grand Total: <span id="allocation-grand-total">$0</span></div>
                             </div>
                         </div>
                         
@@ -569,7 +602,13 @@
             const fixedIncomeTotal = document.querySelectorAll('.fixed-income-cell').length > 0 ? 
                 Array.from(document.querySelectorAll('.fixed-income-cell')).reduce((sum, cell) => sum + (Number(cell.value) || 0), 0) : 0;
                 
-            const grandTotal = equityTotal + fixedIncomeTotal;
+            const cashTotal = document.querySelectorAll('.cash-cell').length > 0 ? 
+                Array.from(document.querySelectorAll('.cash-cell')).reduce((sum, cell) => sum + (Number(cell.value) || 0), 0) : 0;
+                
+            document.getElementById('total-cash').textContent = formatCurrency(cashTotal);
+            document.getElementById('cash-grand-total').textContent = formatCurrency(cashTotal);
+            
+            const grandTotal = equityTotal + fixedIncomeTotal + cashTotal;
             document.getElementById('allocation-grand-total').textContent = formatCurrency(grandTotal);
         }
         
@@ -615,6 +654,17 @@
                 }
             });
             
+            // Process cash allocation
+            document.querySelectorAll('.cash-cell').forEach(cell => {
+                const cashType = cell.dataset.type;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    const assetKey = `cash_${cashType}`;
+                    weights[assetKey] = value / totalAllocation;
+                }
+            });
+            
             return weights;
         }
         
@@ -648,7 +698,7 @@
         // Function to reset allocation
         function resetAllocation() {
             // Reset all input fields to zero
-            document.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(cell => {
+            document.querySelectorAll('.equity-cell, .fixed-income-cell, .cash-cell').forEach(cell => {
                 cell.value = 0;
             });
             
@@ -690,6 +740,20 @@
                         type: 'fixed',
                         size_term: row,
                         style_risk: col,
+                        amount: value
+                    });
+                }
+            });
+            
+            // Add cash data
+            document.querySelectorAll('.cash-cell').forEach(cell => {
+                const cashType = cell.dataset.type;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    allocation.push({
+                        type: 'cash',
+                        cash_type: cashType,
                         amount: value
                     });
                 }
@@ -795,6 +859,11 @@
                             if (cell) {
                                 cell.value = amount;
                             }
+                        } else if (type === 'cash') {
+                            const cell = document.querySelector(`.cash-cell[data-type="${styleOrRisk}"]`);
+                            if (cell) {
+                                cell.value = amount;
+                            }
                         }
                     });
                     
@@ -830,15 +899,24 @@
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                const [type, sizeOrTerm, styleOrRisk, amount] = line.split(',');
+                const fields = line.split(',');
+                const type = fields[0];
                 
                 if (type === 'equity') {
+                    const [_, sizeOrTerm, styleOrRisk, amount] = fields;
                     const cell = document.querySelector(`.equity-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
                     if (cell) {
                         cell.value = amount;
                     }
                 } else if (type === 'fixed') {
+                    const [_, sizeOrTerm, styleOrRisk, amount] = fields;
                     const cell = document.querySelector(`.fixed-income-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
+                    if (cell) {
+                        cell.value = amount;
+                    }
+                } else if (type === 'cash') {
+                    const [_, cashType, __, amount] = fields; // Notes field may be present
+                    const cell = document.querySelector(`.cash-cell[data-type="${cashType}"]`);
                     if (cell) {
                         cell.value = amount;
                     }
@@ -900,7 +978,7 @@
                         const allocation = data.allocation;
                         
                         // Reset input fields without calling loadAggregatedProviderAllocations again
-                        document.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(cell => {
+                        document.querySelectorAll('.equity-cell, .fixed-income-cell, .cash-cell').forEach(cell => {
                             cell.value = 0;
                         });
                         
@@ -917,6 +995,14 @@
                         for (const [key, value] of Object.entries(allocation.fixed_income)) {
                             const [row, col] = key.split('_');
                             const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
+                            if (cell) {
+                                cell.value = value;
+                            }
+                        }
+                        
+                        // Update cash cells
+                        for (const [key, value] of Object.entries(allocation.cash)) {
+                            const cell = document.querySelector(`.cash-cell[data-type="${key}"]`);
                             if (cell) {
                                 cell.value = value;
                             }
