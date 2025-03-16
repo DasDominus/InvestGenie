@@ -16,15 +16,6 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .portfolio-input {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .portfolio-input label {
-            width: 100px;
-            margin-right: 10px;
-        }
         .loading {
             display: none;
             text-align: center;
@@ -33,11 +24,38 @@
         #efficient-frontier-plot {
             height: 500px;
         }
-        #current-portfolio-info {
-            margin-top: 20px;
-        }
         .optimize-btn {
             margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .input-grid input {
+            width: 100%;
+            padding: 0.25rem;
+        }
+        .input-grid td {
+            padding: 0.25rem;
+        }
+        .action-button {
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .csv-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .csv-controls input[type="file"] {
+            max-width: 220px;
+        }
+        .allocation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .totals {
+            font-weight: bold;
+            color: #0d6efd;
         }
     </style>
 </head>
@@ -46,7 +64,8 @@
         <h1 class="text-center my-4">Portfolio Efficient Frontier Analysis</h1>
         
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-lg-7">
+                <!-- Efficient Frontier Section -->
                 <div class="card">
                     <div class="card-header">
                         <h3>Efficient Frontier</h3>
@@ -59,34 +78,15 @@
                             </div>
                             <p>Calculating efficient frontier...</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Portfolio Settings</h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="portfolio-form">
-                            <div id="portfolio-weights">
-                                <!-- Asset weights will be added here dynamically -->
-                            </div>
-                            
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-primary" id="calculate-btn">Calculate Portfolio</button>
-                                <button type="button" class="btn btn-warning" id="reset-btn">Reset Weights</button>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-success optimize-btn" id="max-sharpe-btn">Max Sharpe Ratio</button>
-                                <button type="button" class="btn btn-info optimize-btn" id="min-vol-btn">Min Volatility</button>
-                            </div>
-                        </form>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-success optimize-btn" id="max-sharpe-btn">Max Sharpe Ratio</button>
+                            <button type="button" class="btn btn-info optimize-btn" id="min-vol-btn">Min Volatility</button>
+                            <button type="button" class="btn btn-warning" id="reset-allocation-btn">Reset Allocation</button>
+                        </div>
                     </div>
                 </div>
                 
+                <!-- Portfolio Metrics Section -->
                 <div class="card">
                     <div class="card-header">
                         <h3>Portfolio Metrics</h3>
@@ -97,17 +97,28 @@
                         </div>
                     </div>
                 </div>
-                
+            </div>
+            
+            <div class="col-lg-5">
                 <!-- Asset Allocation Grid -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>Asset Allocation</h3>
+                        <div class="allocation-header">
+                            <h3>Asset Allocation</h3>
+                            <div class="csv-controls">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="save-csv-btn">Save CSV</button>
+                                <div class="input-group">
+                                    <input type="file" class="form-control form-control-sm" id="load-csv-input" accept=".csv">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="load-csv-btn">Load</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <h4>Equity Allocation ($)</h4>
                             <div class="table-responsive">
-                                <table class="table table-bordered" id="equity-allocation-grid">
+                                <table class="table table-bordered table-sm input-grid" id="equity-allocation-grid">
                                     <thead>
                                         <tr>
                                             <th></th>
@@ -154,7 +165,7 @@
                         <div class="mb-3">
                             <h4>Fixed Income Allocation ($)</h4>
                             <div class="table-responsive">
-                                <table class="table table-bordered" id="fixed-income-allocation-grid">
+                                <table class="table table-bordered table-sm input-grid" id="fixed-income-allocation-grid">
                                     <thead>
                                         <tr>
                                             <th></th>
@@ -198,16 +209,16 @@
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <h4>Total Allocation</h4>
-                            <p>Equity: <span id="total-equity" class="fw-bold">$0</span></p>
-                            <p>Fixed Income: <span id="total-fixed-income" class="fw-bold">$0</span></p>
-                            <p>Grand Total: <span id="allocation-grand-total" class="fw-bold">$0</span></p>
+                        <div class="mb-3 totals">
+                            <div class="row">
+                                <div class="col-md-4">Equity: <span id="total-equity">$0</span></div>
+                                <div class="col-md-4">Fixed Income: <span id="total-fixed-income">$0</span></div>
+                                <div class="col-md-4">Grand Total: <span id="allocation-grand-total">$0</span></div>
+                            </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-primary" id="update-allocation-btn">Update Allocation</button>
-                            <button type="button" class="btn btn-warning" id="reset-allocation-btn">Reset Allocation</button>
+                        <div class="mb-3 text-center">
+                            <button type="button" class="btn btn-primary action-button" id="update-allocation-btn">Update Portfolio</button>
                         </div>
                     </div>
                 </div>
@@ -230,9 +241,6 @@
                 efficientFrontierData = await response.json();
                 assets = efficientFrontierData.assets;
                 
-                // Initialize portfolio weights form
-                initializePortfolioForm();
-                
                 // Plot efficient frontier
                 plotEfficientFrontier();
             } catch (error) {
@@ -240,126 +248,6 @@
                 alert('Error fetching efficient frontier data. Please try again.');
             } finally {
                 document.getElementById('plot-loading').style.display = 'none';
-            }
-        }
-        
-        // Function to initialize portfolio weights form
-        function initializePortfolioForm() {
-            const weightsContainer = document.getElementById('portfolio-weights');
-            weightsContainer.innerHTML = '';
-            
-            // Create equal weights
-            const equalWeight = 1.0 / assets.length;
-            
-            // Create input for each asset
-            assets.forEach(asset => {
-                const div = document.createElement('div');
-                div.className = 'portfolio-input';
-                
-                const label = document.createElement('label');
-                label.textContent = asset;
-                label.htmlFor = `weight-${asset}`;
-                
-                const input = document.createElement('input');
-                input.type = 'range';
-                input.className = 'form-range';
-                input.id = `weight-${asset}`;
-                input.min = '0';
-                input.max = '1';
-                input.step = '0.01';
-                input.value = equalWeight.toFixed(2);
-                
-                const valueDisplay = document.createElement('span');
-                valueDisplay.className = 'ms-2';
-                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
-                
-                input.addEventListener('input', () => {
-                    valueDisplay.textContent = `${(input.value * 100).toFixed(0)}%`;
-                    normalizeWeights(input.id);
-                });
-                
-                div.appendChild(label);
-                div.appendChild(input);
-                div.appendChild(valueDisplay);
-                
-                weightsContainer.appendChild(div);
-            });
-        }
-        
-        // Function to normalize weights to sum to 1
-        function normalizeWeights(changedInputId) {
-            // Get all weight inputs
-            const inputs = Array.from(document.querySelectorAll('#portfolio-weights input[type="range"]'));
-            
-            // Calculate total weight excluding the changed input
-            const changedInput = document.getElementById(changedInputId);
-            const changedValue = parseFloat(changedInput.value);
-            
-            const otherInputs = inputs.filter(input => input.id !== changedInputId);
-            const otherSum = otherInputs.reduce((sum, input) => sum + parseFloat(input.value), 0);
-            
-            // If sum of all weights exceeds 1, adjust other weights proportionally
-            if (changedValue + otherSum > 1) {
-                // If other sum is zero, we can't normalize proportionally
-                if (otherSum === 0) {
-                    changedInput.value = 1;
-                    
-                    // Update value display
-                    const valueDisplay = changedInput.nextElementSibling;
-                    valueDisplay.textContent = `${(changedInput.value * 100).toFixed(0)}%`;
-                    return;
-                }
-                
-                // Calculate scale factor
-                const scaleFactor = (1 - changedValue) / otherSum;
-                
-                // Adjust other weights
-                otherInputs.forEach(input => {
-                    const newValue = parseFloat(input.value) * scaleFactor;
-                    input.value = newValue.toFixed(2);
-                    
-                    // Update value display
-                    const valueDisplay = input.nextElementSibling;
-                    valueDisplay.textContent = `${(newValue * 100).toFixed(0)}%`;
-                });
-            }
-        }
-        
-        // Function to get current portfolio weights
-        function getCurrentWeights() {
-            const weights = {};
-            
-            assets.forEach(asset => {
-                const input = document.getElementById(`weight-${asset}`);
-                weights[asset] = parseFloat(input.value);
-            });
-            
-            return weights;
-        }
-        
-        // Function to calculate current portfolio
-        async function calculatePortfolio() {
-            const weights = getCurrentWeights();
-            
-            try {
-                const response = await fetch('/api/portfolio', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ weights })
-                });
-                
-                currentPortfolio = await response.json();
-                
-                // Update portfolio info
-                updatePortfolioInfo();
-                
-                // Update plot with current portfolio
-                plotEfficientFrontier();
-            } catch (error) {
-                console.error('Error calculating portfolio:', error);
-                alert('Error calculating portfolio metrics. Please try again.');
             }
         }
         
@@ -375,7 +263,9 @@
             
             let weightsList = '';
             for (const [asset, weight] of Object.entries(currentPortfolio.weights)) {
-                weightsList += `<li>${asset}: ${(weight * 100).toFixed(2)}%</li>`;
+                if (weight > 0.001) { // Only show assets with significant weights
+                    weightsList += `<li>${asset}: ${(weight * 100).toFixed(2)}%</li>`;
+                }
             }
             
             infoContainer.innerHTML = `
@@ -397,41 +287,54 @@
                 const response = await fetch(`/api/optimize?type=${type}`);
                 const data = await response.json();
                 
-                // Update portfolio weights in form
-                for (const [asset, weight] of Object.entries(data.metrics.weights)) {
-                    const input = document.getElementById(`weight-${asset}`);
-                    if (input) {
-                        input.value = weight.toFixed(2);
-                        
-                        // Update value display
-                        const valueDisplay = input.nextElementSibling;
-                        valueDisplay.textContent = `${(weight * 100).toFixed(0)}%`;
-                    }
-                }
+                // Calculate portfolio with optimized weights
+                currentPortfolio = data.metrics;
+                updatePortfolioInfo();
+                plotEfficientFrontier();
                 
-                // Calculate portfolio with new weights
-                await calculatePortfolio();
+                // Update the allocation grids based on the optimized portfolio
+                // This maps the optimized weights back to the allocation grids
+                updateAllocationGridsFromWeights(currentPortfolio.weights);
             } catch (error) {
                 console.error(`Error optimizing portfolio for ${type}:`, error);
                 alert(`Error optimizing portfolio. Please try again.`);
             }
         }
         
-        // Function to reset weights
-        function resetWeights() {
-            const equalWeight = 1.0 / assets.length;
+        // Function to update allocation grids from weights
+        function updateAllocationGridsFromWeights(weights) {
+            // First reset all grids
+            resetAllocation();
             
-            assets.forEach(asset => {
-                const input = document.getElementById(`weight-${asset}`);
-                input.value = equalWeight.toFixed(2);
-                
-                // Update value display
-                const valueDisplay = input.nextElementSibling;
-                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
+            // Get total portfolio value - for simplicity, assume $100,000 total
+            const totalPortfolioValue = 100000;
+            
+            // Update equity grid
+            Object.keys(weights).forEach(asset => {
+                if (asset.startsWith('equity_') && weights[asset] > 0) {
+                    const [_, size, style] = asset.split('_');
+                    const cell = document.querySelector(`.equity-cell[data-row="${size}"][data-col="${style}"]`);
+                    if (cell) {
+                        cell.value = Math.round(weights[asset] * totalPortfolioValue);
+                    }
+                }
             });
             
-            // Calculate portfolio with new weights
-            calculatePortfolio();
+            // Update fixed income grid
+            Object.keys(weights).forEach(asset => {
+                if (asset.startsWith('fixed_') && weights[asset] > 0) {
+                    const [_, term, risk] = asset.split('_');
+                    const cell = document.querySelector(`.fixed-income-cell[data-row="${term}"][data-col="${risk}"]`);
+                    if (cell) {
+                        cell.value = Math.round(weights[asset] * totalPortfolioValue);
+                    }
+                }
+            });
+            
+            // Recalculate totals
+            calculateEquityTotals();
+            calculateFixedIncomeTotals();
+            calculateGrandTotal();
         }
         
         // Function to plot efficient frontier
@@ -533,29 +436,6 @@
             
             Plotly.newPlot('efficient-frontier-plot', traces, layout);
         }
-        
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Fetch efficient frontier data on page load
-            fetchEfficientFrontier();
-            
-            // Calculate button
-            document.getElementById('calculate-btn').addEventListener('click', calculatePortfolio);
-            
-            // Reset button
-            document.getElementById('reset-btn').addEventListener('click', resetWeights);
-            
-            // Optimize buttons
-            document.getElementById('max-sharpe-btn').addEventListener('click', () => optimizePortfolio('max_sharpe'));
-            document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
-            
-            // Allocation grid functionality
-            initializeAllocationGrids();
-            
-            // Allocation grid buttons
-            document.getElementById('update-allocation-btn').addEventListener('click', updateAllocation);
-            document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
-        });
         
         // Function to initialize allocation grids
         function initializeAllocationGrids() {
@@ -684,7 +564,6 @@
             const weights = {};
             
             // Process equity allocation
-            const equityGrid = {};
             document.querySelectorAll('.equity-cell').forEach(cell => {
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
@@ -730,7 +609,7 @@
                 currentPortfolio = data;
                 updatePortfolioInfo();
                 plotEfficientFrontier();
-                alert('Portfolio updated based on asset allocation.');
+                // alert('Portfolio updated based on asset allocation.');
             })
             .catch(error => {
                 console.error('Error updating portfolio from allocation:', error);
@@ -750,6 +629,236 @@
             calculateFixedIncomeTotals();
             calculateGrandTotal();
         }
+        
+        // Function to save allocation to CSV
+        function saveAllocationToCSV() {
+            // Get allocation data
+            const allocation = [];
+            
+            // Add equity data
+            document.querySelectorAll('.equity-cell').forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    allocation.push({
+                        type: 'equity',
+                        size_term: row,
+                        style_risk: col,
+                        amount: value
+                    });
+                }
+            });
+            
+            // Add fixed income data
+            document.querySelectorAll('.fixed-income-cell').forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    allocation.push({
+                        type: 'fixed',
+                        size_term: row,
+                        style_risk: col,
+                        amount: value
+                    });
+                }
+            });
+            
+            // If no allocation, show error
+            if (allocation.length === 0) {
+                alert('Please allocate some funds before saving.');
+                return;
+            }
+            
+            // Save using server API
+            fetch('/api/allocations/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ allocation })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Allocation saved successfully as ${data.filename}`);
+                    // Optionally, update a list of saved allocations if we had one
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving allocation:', error);
+                alert('Error saving allocation. Please try again.');
+            });
+            
+            // Also offer local download as an alternative
+            const csvContent = "type,size_term,style_risk,amount\n" + 
+                allocation.map(item => `${item.type},${item.size_term},${item.style_risk},${item.amount}`).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'allocation.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Function to load allocation from CSV
+        function loadAllocationFromCSV(file) {
+            // If file is provided, load from file
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    processCSVContent(event.target.result);
+                };
+                
+                reader.readAsText(file);
+            } else {
+                // If no file provided, show a list of server-saved allocations
+                fetch('/api/allocations/list')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.files.length > 0) {
+                        // For simplicity, just load the most recent one
+                        // In a real app, you'd show a selection UI
+                        const mostRecent = data.files[0];
+                        loadAllocationFromServer(mostRecent.filename);
+                    } else {
+                        alert('No saved allocations found on server.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error listing allocations:', error);
+                    alert('Error loading allocation list. Please try again.');
+                });
+            }
+        }
+        
+        // Function to load allocation from server
+        function loadAllocationFromServer(filename) {
+            fetch(`/api/allocations/load/${filename}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.allocation) {
+                    // Reset current allocation
+                    resetAllocation();
+                    
+                    // Process allocation data
+                    data.allocation.forEach(item => {
+                        const type = item.type;
+                        const sizeOrTerm = item.size_term;
+                        const styleOrRisk = item.style_risk;
+                        const amount = item.amount;
+                        
+                        if (type === 'equity') {
+                            const cell = document.querySelector(`.equity-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
+                            if (cell) {
+                                cell.value = amount;
+                            }
+                        } else if (type === 'fixed') {
+                            const cell = document.querySelector(`.fixed-income-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
+                            if (cell) {
+                                cell.value = amount;
+                            }
+                        }
+                    });
+                    
+                    // Update totals
+                    calculateEquityTotals();
+                    calculateFixedIncomeTotals();
+                    calculateGrandTotal();
+                    
+                    // Update portfolio
+                    updateAllocation();
+                    
+                    alert(`Allocation loaded from ${filename}`);
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading allocation:', error);
+                alert('Error loading allocation. Please try again.');
+            });
+        }
+        
+        // Function to process CSV content
+        function processCSVContent(csvContent) {
+            // Reset current allocation
+            resetAllocation();
+            
+            // Parse CSV content
+            const lines = csvContent.split('\n');
+            
+            // Skip header row
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const [type, sizeOrTerm, styleOrRisk, amount] = line.split(',');
+                
+                if (type === 'equity') {
+                    const cell = document.querySelector(`.equity-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
+                    if (cell) {
+                        cell.value = amount;
+                    }
+                } else if (type === 'fixed') {
+                    const cell = document.querySelector(`.fixed-income-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
+                    if (cell) {
+                        cell.value = amount;
+                    }
+                }
+            }
+            
+            // Update totals
+            calculateEquityTotals();
+            calculateFixedIncomeTotals();
+            calculateGrandTotal();
+            
+            // Update portfolio
+            updateAllocation();
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch efficient frontier data on page load
+            fetchEfficientFrontier();
+            
+            // Initialize allocation grids
+            initializeAllocationGrids();
+            
+            // Optimize buttons
+            document.getElementById('max-sharpe-btn').addEventListener('click', () => optimizePortfolio('max_sharpe'));
+            document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
+            
+            // Allocation update button
+            document.getElementById('update-allocation-btn').addEventListener('click', updateAllocation);
+            
+            // Reset button
+            document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
+            
+            // CSV save/load buttons
+            document.getElementById('save-csv-btn').addEventListener('click', saveAllocationToCSV);
+            
+            document.getElementById('load-csv-btn').addEventListener('click', () => {
+                const fileInput = document.getElementById('load-csv-input');
+                if (fileInput.files.length > 0) {
+                    loadAllocationFromCSV(fileInput.files[0]);
+                } else {
+                    // Ask if the user wants to load from server
+                    if (confirm('No file selected. Would you like to load a previously saved allocation from server?')) {
+                        loadAllocationFromCSV(null); // null will trigger server loading
+                    }
+                }
+            });
+        });
     </script>
 </body>
 </html> 

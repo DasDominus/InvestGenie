@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import json
 import numpy as np
 import pandas as pd
 import plotly
 import plotly.graph_objects as go
+import csv
+import io
+import os
+from datetime import datetime
 
 from stock_handler import StockHandler
 from efficient_frontier import EfficientFrontier
@@ -11,6 +15,11 @@ from efficient_frontier import EfficientFrontier
 app = Flask(__name__)
 stock_handler = StockHandler()
 ef_calculator = EfficientFrontier(stock_handler)
+
+# Create directory for saved allocations if it doesn't exist
+ALLOCATIONS_DIR = 'allocations'
+if not os.path.exists(ALLOCATIONS_DIR):
+    os.makedirs(ALLOCATIONS_DIR)
 
 @app.route('/')
 def index():
@@ -72,6 +81,77 @@ def optimize_portfolio():
 def get_assets():
     """Return the list of available assets."""
     return jsonify(stock_handler.get_assets())
+
+@app.route('/api/allocations/save', methods=['POST'])
+def save_allocation():
+    """Save the current allocation to a CSV file on the server."""
+    try:
+        data = request.get_json()
+        allocation = data.get('allocation', [])
+        
+        if not allocation:
+            return jsonify({'success': False, 'message': 'No allocation data provided'}), 400
+        
+        # Create a timestamp for the filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"allocation_{timestamp}.csv"
+        filepath = os.path.join(ALLOCATIONS_DIR, filename)
+        
+        # Save the allocation to CSV
+        with open(filepath, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['type', 'size_term', 'style_risk', 'amount'])
+            for item in allocation:
+                writer.writerow([item['type'], item['size_term'], item['style_risk'], item['amount']])
+        
+        return jsonify({'success': True, 'filename': filename, 'message': 'Allocation saved successfully'})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error saving allocation: {str(e)}'}), 500
+
+@app.route('/api/allocations/load/<filename>', methods=['GET'])
+def load_allocation(filename):
+    """Load an allocation from a CSV file on the server."""
+    try:
+        filepath = os.path.join(ALLOCATIONS_DIR, filename)
+        
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'message': 'File not found'}), 404
+        
+        # Read the allocation from CSV
+        allocation = []
+        with open(filepath, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                allocation.append(row)
+        
+        return jsonify({'success': True, 'allocation': allocation})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error loading allocation: {str(e)}'}), 500
+
+@app.route('/api/allocations/list', methods=['GET'])
+def list_allocations():
+    """List all saved allocations."""
+    try:
+        files = []
+        for filename in os.listdir(ALLOCATIONS_DIR):
+            if filename.endswith('.csv'):
+                filepath = os.path.join(ALLOCATIONS_DIR, filename)
+                timestamp = os.path.getmtime(filepath)
+                date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                files.append({
+                    'filename': filename,
+                    'date': date
+                })
+        
+        # Sort by date (newest first)
+        files.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({'success': True, 'files': files})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error listing allocations: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

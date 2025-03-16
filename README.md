@@ -1,70 +1,95 @@
-# Portfolio Efficient Frontier Analyzer
+# Portfolio Efficient Frontier Analysis Tool
 
-A local Python-based tool for portfolio optimization and efficient frontier analysis. This application helps you visualize where your asset allocation portfolio lies on the efficient frontier and lets you adjust different allocations to see how your portfolio moves.
+A web-based tool for portfolio optimization using Modern Portfolio Theory and the Efficient Frontier. This application allows users to analyze different portfolio allocations and see how they perform in terms of expected return, volatility, and Sharpe ratio.
 
 ## Features
 
-- Visualize the efficient frontier for a set of assets
-- Calculate the risk, return, and Sharpe ratio of your portfolio
-- Adjust asset allocations and see real-time changes on the efficient frontier
-- Optimize your portfolio for maximum Sharpe ratio or minimum volatility
-- Compare your portfolio to random portfolios and the efficient frontier
+- **Efficient Frontier Visualization**: Displays a graph of the efficient frontier along with random portfolios colored by Sharpe ratio
+- **Asset Allocation Grid**: Allows setting allocations using dollar values for different asset classes
+- **Portfolio Optimization**: One-click optimization for maximum Sharpe ratio or minimum volatility
+- **Allocation Saving/Loading**: Import and export portfolio allocations as CSV files
 
-## Requirements
+## Asset Allocation Grid Structure
 
-- Python 3.6 or higher
-- Required Python packages (see requirements.txt)
+### Equity Allocation
+
+The equity allocation grid follows a 3×3 matrix structure:
+
+| | Growth | Blend | Value |
+|----------|----------|----------|----------|
+| Small Cap | $ | $ | $ |
+| Mid Cap | $ | $ | $ |
+| Large Cap | $ | $ | $ |
+
+### Fixed Income Allocation
+
+The fixed income allocation grid follows a 3×3 matrix structure:
+
+| | Low Risk | Mid Risk | High Risk |
+|----------|----------|----------|----------|
+| Short Term | $ | $ | $ |
+| Mid Term | $ | $ | $ |
+| Long Term | $ | $ | $ |
+
+## Usage Instructions
+
+1. **View the Efficient Frontier**:
+   - The graph displays the efficient frontier, random portfolios, and optimal points
+   - Hover over points to see additional details
+
+2. **Set Asset Allocation**:
+   - Enter dollar values in the grid cells for the asset classes you want to allocate to
+   - Totals will automatically calculate for each row, column, and overall
+   - Click "Update Portfolio" to see how your allocation performs
+
+3. **Optimize Your Portfolio**:
+   - Click "Max Sharpe Ratio" for the portfolio with the best risk-adjusted return
+   - Click "Min Volatility" for the portfolio with the lowest risk
+   - The allocation grid will automatically update with the optimized values
+
+4. **Save and Load Allocations**:
+   - Click "Save CSV" to save your current allocation to a CSV file
+   - Use the file input and "Load" button to import an allocation from a CSV file
+   - The system also automatically saves allocations on the server that can be loaded later
+
+## CSV File Format
+
+The CSV file follows this format:
+
+```
+type,size_term,style_risk,amount
+equity,small,growth,5000
+equity,large,value,10000
+fixed,short,low,3000
+...
+```
+
+Where:
+- `type`: Either "equity" or "fixed"
+- `size_term`: Size for equity (small, mid, large) or term for fixed income (short, mid, long)
+- `style_risk`: Style for equity (growth, blend, value) or risk for fixed income (low, mid, high)
+- `amount`: Dollar amount allocated
 
 ## Installation
 
-1. Clone this repository or download the source code
-2. Install the required packages:
+1. Clone the repository
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Run the application:
+   ```
+   python app.py
+   ```
+4. Open a browser and go to `http://localhost:5000`
 
-```
-pip install -r requirements.txt
-```
+## Dependencies
 
-## Usage
+- Flask
+- NumPy
+- pandas
+- Plotly
 
-1. Start the server:
+## Note
 
-```
-python app.py
-```
-
-2. Open a web browser and navigate to `http://127.0.0.1:5000/`
-
-3. The application will load with an initial set of assets and their data
-   - The chart shows the efficient frontier, random portfolios, and key points
-   - Adjust the sliders to change asset allocations
-   - Click 'Calculate Portfolio' to see where your portfolio falls on the frontier
-   - Use the optimization buttons to find optimal portfolios
-
-## Customization
-
-The current implementation uses mock data for stock prices. In a real-world scenario, you would modify the `StockHandler` class to fetch real market data from an API like:
-
-- Yahoo Finance API
-- Alpha Vantage
-- IEX Cloud
-- Quandl
-
-## Technical Details
-
-The application uses:
-- Flask for the web server
-- PyPortfolioOpt for portfolio optimization calculations
-- Plotly for interactive data visualization
-- NumPy and Pandas for data manipulation
-
-## Mathematical Background
-
-The application uses Modern Portfolio Theory to calculate:
-- Expected returns based on historical data
-- Portfolio volatility using covariance between assets
-- Sharpe ratio for risk-adjusted performance
-- The efficient frontier representing optimal portfolios
-
-## License
-
-MIT 
+This application uses mock data for demonstration purposes. In a real investment scenario, you would connect to actual market data sources. 
