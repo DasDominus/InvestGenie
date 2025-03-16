@@ -134,6 +134,13 @@
                         <div class="allocation-header">
                             <h3>Asset Allocation</h3>
                             <div class="csv-controls">
+                                <div class="period-selector d-flex align-items-center me-2">
+                                    <select class="form-select form-select-sm me-1" id="period-select">
+                                        <option value="">Latest</option>
+                                        <!-- Will be populated with available periods -->
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="load-period-btn">Load</button>
+                                </div>
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="save-csv-btn">Save CSV</button>
                                 <div class="input-group">
                                     <input type="file" class="form-control form-control-sm" id="load-csv-input" accept=".csv">
@@ -143,6 +150,10 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <div id="current-period-info" class="alert alert-info mb-3" style="display: none;">
+                            Showing allocations for: <span id="current-period-text"></span>
+                        </div>
+                        
                         <div class="mb-3">
                             <h4>Equity Allocation ($) <small class="text-muted">(Aggregated from providers - <a href="/providers">Provider Allocations</a>)</small></h4>
                             <div class="table-responsive">
@@ -965,13 +976,59 @@
                 }
             });
             
-            // Load aggregated provider allocations
-            loadAggregatedProviderAllocations();
+            // Load available periods
+            loadAvailablePeriods();
+            
+            // Add event listener for loading specific periods
+            document.getElementById('load-period-btn').addEventListener('click', () => {
+                const periodValue = document.getElementById('period-select').value;
+                if (periodValue) {
+                    const [year, quarter] = periodValue.split('_');
+                    loadAggregatedProviderAllocations(year, quarter);
+                } else {
+                    // Load latest
+                    loadAggregatedProviderAllocations();
+                }
+            });
         });
         
+        // Find and load periods
+        function loadAvailablePeriods() {
+            fetch('/api/providers/periods')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.periods.length > 0) {
+                        const periodSelect = document.getElementById('period-select');
+                        
+                        // Clear existing options except the "Latest" option
+                        while (periodSelect.options.length > 1) {
+                            periodSelect.remove(1);
+                        }
+                        
+                        // Add periods to the dropdown
+                        data.periods.forEach(period => {
+                            period.quarters.forEach(quarter => {
+                                const option = document.createElement('option');
+                                option.value = `${period.year}_${quarter}`;
+                                option.textContent = `${period.year} Q${quarter}`;
+                                periodSelect.appendChild(option);
+                            });
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading periods:', error);
+                });
+        }
+        
         // Function to load aggregated provider allocations
-        function loadAggregatedProviderAllocations() {
-            fetch('/api/providers/aggregate')
+        function loadAggregatedProviderAllocations(year = null, quarter = null) {
+            let url = '/api/providers/aggregate';
+            if (year && quarter) {
+                url += `?year=${year}&quarter=${quarter}`;
+            }
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -1015,6 +1072,16 @@
                         
                         // Update portfolio based on allocation
                         updateAllocation();
+                        
+                        // Update period indicator if period info is available
+                        if (data.period) {
+                            const periodIndicator = document.getElementById('current-period-info');
+                            const periodText = document.getElementById('current-period-text');
+                            periodText.textContent = `${data.period.year} Q${data.period.quarter}`;
+                            periodIndicator.style.display = 'block';
+                        } else {
+                            document.getElementById('current-period-info').style.display = 'none';
+                        }
                     }
                 })
                 .catch(error => {

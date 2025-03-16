@@ -170,26 +170,57 @@ def save_providers():
     try:
         data = request.get_json()
         providers = data.get('providers', [])
+        year = data.get('year', '')
+        quarter = data.get('quarter', '')
         
         if not providers:
             return jsonify({'success': False, 'message': 'No provider data provided'}), 400
         
-        # Save to a JSON file
-        filepath = os.path.join(PROVIDERS_DIR, 'providers.json')
+        if not year or not quarter:
+            return jsonify({'success': False, 'message': 'Year and quarter are required'}), 400
+        
+        # Create a directory for the year if it doesn't exist
+        year_dir = os.path.join(PROVIDERS_DIR, str(year))
+        if not os.path.exists(year_dir):
+            os.makedirs(year_dir)
+        
+        # Save to a JSON file named by quarter
+        filepath = os.path.join(year_dir, f'providers_q{quarter}.json')
         
         with open(filepath, 'w') as jsonfile:
             json.dump(providers, jsonfile)
         
-        return jsonify({'success': True, 'message': 'Providers saved successfully'})
+        return jsonify({'success': True, 'message': f'Providers saved successfully for {year} Q{quarter}'})
     
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error saving providers: {str(e)}'}), 500
 
 @app.route('/api/providers/list', methods=['GET'])
 def list_providers():
-    """List all saved providers."""
+    """List all saved providers for a specific year and quarter."""
     try:
-        filepath = os.path.join(PROVIDERS_DIR, 'providers.json')
+        year = request.args.get('year')
+        quarter = request.args.get('quarter')
+        
+        if not year or not quarter:
+            # Return a list of available years and quarters
+            years_quarters = []
+            if os.path.exists(PROVIDERS_DIR):
+                for year_dir in os.listdir(PROVIDERS_DIR):
+                    year_path = os.path.join(PROVIDERS_DIR, year_dir)
+                    if os.path.isdir(year_path):
+                        for file in os.listdir(year_path):
+                            if file.startswith('providers_q') and file.endswith('.json'):
+                                quarter = file.replace('providers_q', '').replace('.json', '')
+                                years_quarters.append({'year': year_dir, 'quarter': quarter})
+            
+            # Sort by year and quarter (newest first)
+            years_quarters.sort(key=lambda x: (x['year'], x['quarter']), reverse=True)
+            
+            return jsonify({'success': True, 'periods': years_quarters})
+        
+        # Load providers for the specified year and quarter
+        filepath = os.path.join(PROVIDERS_DIR, str(year), f'providers_q{quarter}.json')
         
         if not os.path.exists(filepath):
             return jsonify({'success': True, 'providers': []})
@@ -202,14 +233,62 @@ def list_providers():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error listing providers: {str(e)}'}), 500
 
+@app.route('/api/providers/periods', methods=['GET'])
+def list_periods():
+    """List all available years and quarters."""
+    try:
+        periods = []
+        if os.path.exists(PROVIDERS_DIR):
+            for year_dir in os.listdir(PROVIDERS_DIR):
+                year_path = os.path.join(PROVIDERS_DIR, year_dir)
+                if os.path.isdir(year_path):
+                    quarters = []
+                    for file in os.listdir(year_path):
+                        if file.startswith('providers_q') and file.endswith('.json'):
+                            quarter = file.replace('providers_q', '').replace('.json', '')
+                            quarters.append(quarter)
+                    
+                    if quarters:
+                        quarters.sort()
+                        periods.append({'year': year_dir, 'quarters': quarters})
+        
+        # Sort by year (newest first)
+        periods.sort(key=lambda x: x['year'], reverse=True)
+        
+        return jsonify({'success': True, 'periods': periods})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error listing periods: {str(e)}'}), 500
+
 @app.route('/api/providers/aggregate', methods=['GET'])
 def aggregate_providers():
-    """Aggregate allocations from all providers."""
+    """Aggregate allocations from all providers for a specific year and quarter."""
     try:
-        filepath = os.path.join(PROVIDERS_DIR, 'providers.json')
+        year = request.args.get('year')
+        quarter = request.args.get('quarter')
+        
+        if not year or not quarter:
+            # If no year/quarter specified, try to use the most recent period
+            if os.path.exists(PROVIDERS_DIR):
+                years = sorted([y for y in os.listdir(PROVIDERS_DIR) if os.path.isdir(os.path.join(PROVIDERS_DIR, y))], reverse=True)
+                
+                if years:
+                    year_dir = os.path.join(PROVIDERS_DIR, years[0])
+                    quarter_files = [f for f in os.listdir(year_dir) if f.startswith('providers_q') and f.endswith('.json')]
+                    
+                    if quarter_files:
+                        quarter_files.sort(reverse=True)
+                        quarter = quarter_files[0].replace('providers_q', '').replace('.json', '')
+                        year = years[0]
+                    else:
+                        return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}, 'cash': {}}, 'period': None})
+                else:
+                    return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}, 'cash': {}}, 'period': None})
+        
+        filepath = os.path.join(PROVIDERS_DIR, str(year), f'providers_q{quarter}.json')
         
         if not os.path.exists(filepath):
-            return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}, 'cash': {}}})
+            return jsonify({'success': True, 'allocation': {'equity': {}, 'fixed_income': {}, 'cash': {}}, 'period': {'year': year, 'quarter': quarter}})
         
         with open(filepath, 'r') as jsonfile:
             providers = json.load(jsonfile)
@@ -245,7 +324,7 @@ def aggregate_providers():
                     else:
                         aggregated['cash'][key] = amount
         
-        return jsonify({'success': True, 'allocation': aggregated})
+        return jsonify({'success': True, 'allocation': aggregated, 'period': {'year': year, 'quarter': quarter}})
     
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error aggregating providers: {str(e)}'}), 500

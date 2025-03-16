@@ -79,9 +79,31 @@
                     </div>
                 </div>
                 <div class="col-md-6 text-end">
-                    <button class="btn btn-success" id="save-all-providers-btn">Save All Providers</button>
+                    <div class="period-selector d-flex justify-content-end align-items-center">
+                        <div class="me-2">
+                            <label for="year-select" class="form-label mb-0 me-1">Year:</label>
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="year-select">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="me-2">
+                            <label for="quarter-select" class="form-label mb-0 me-1">Quarter:</label>
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="quarter-select">
+                                <option value="1">Q1</option>
+                                <option value="2">Q2</option>
+                                <option value="3">Q3</option>
+                                <option value="4">Q4</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm me-2" id="load-period-btn">Load Period</button>
+                        <button class="btn btn-success" id="save-providers-btn">Save</button>
+                    </div>
                 </div>
             </div>
+        </div>
+        
+        <div id="current-period-indicator" class="alert alert-info mb-3" style="display: none;">
+            Currently viewing: <span id="current-period-text"></span>
         </div>
 
         <div id="provider-list">
@@ -248,16 +270,96 @@
             // Provider management
             let providers = [];
             let nextProviderId = 1;
-
+            let currentYear = new Date().getFullYear();
+            let currentQuarter = Math.floor((new Date().getMonth() + 3) / 3);
+            
             // Load providers from local storage on page load
             document.addEventListener('DOMContentLoaded', function() {
-                loadProviders();
+                // Initialize the year select with the last 5 years
+                const yearSelect = document.getElementById('year-select');
+                for (let i = 0; i < 5; i++) {
+                    const year = currentYear - i;
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                }
+                
+                // Set the current quarter
+                document.getElementById('quarter-select').value = currentQuarter;
+                
+                // Load periods for dropdown options
+                loadAvailablePeriods();
+                
+                // Load the most recent period or default to current
+                loadProvidersForPeriod(currentYear, currentQuarter);
                 
                 // Add event listeners
                 document.getElementById('add-provider-btn').addEventListener('click', addProvider);
-                document.getElementById('save-all-providers-btn').addEventListener('click', saveAllProviders);
+                document.getElementById('save-providers-btn').addEventListener('click', saveAllProviders);
+                document.getElementById('load-period-btn').addEventListener('click', function() {
+                    const year = document.getElementById('year-select').value;
+                    const quarter = document.getElementById('quarter-select').value;
+                    loadProvidersForPeriod(year, quarter);
+                });
             });
-
+            
+            // Function to load available periods
+            function loadAvailablePeriods() {
+                fetch('/api/providers/periods')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.periods.length > 0) {
+                            // We already initialized the year select with recent years
+                            // We could enhance this to mark years with data
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading periods:', error);
+                    });
+            }
+            
+            // Function to load providers for a specific period
+            function loadProvidersForPeriod(year, quarter) {
+                fetch(`/api/providers/list?year=${year}&quarter=${quarter}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Clear existing providers
+                            providers = data.providers || [];
+                            
+                            // Clear the provider list UI
+                            document.getElementById('provider-list').innerHTML = '';
+                            
+                            // Find the highest ID to set nextProviderId
+                            nextProviderId = providers.length > 0 ? 
+                                providers.reduce((max, provider) => {
+                                    const id = parseInt(provider.id.replace('provider-', ''));
+                                    return id > max ? id : max;
+                                }, 0) + 1 : 1;
+                            
+                            // Add providers to UI
+                            providers.forEach(provider => {
+                                addProviderToUI(provider);
+                            });
+                            
+                            // Update the current period indicator
+                            const periodIndicator = document.getElementById('current-period-indicator');
+                            const periodText = document.getElementById('current-period-text');
+                            periodText.textContent = `${year} Q${quarter}`;
+                            periodIndicator.style.display = 'block';
+                            
+                            // Update current year and quarter
+                            currentYear = year;
+                            currentQuarter = quarter;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading providers for period:', error);
+                        alert('Error loading providers. Please try again.');
+                    });
+            }
+            
             // Function to add a new provider
             function addProvider() {
                 const providerName = document.getElementById('new-provider-name').value.trim();
@@ -294,7 +396,7 @@
                 document.getElementById('new-provider-name').value = '';
                 
                 // Save providers
-                saveProviders();
+                saveProviders(currentYear, currentQuarter);
             }
 
             // Function to add provider to UI
@@ -480,7 +582,7 @@
                 });
                 
                 // Save providers
-                saveProviders();
+                saveProviders(currentYear, currentQuarter);
             }
 
             // Function to remove provider
@@ -495,75 +597,44 @@
                 }
                 
                 // Save providers
-                saveProviders();
+                saveProviders(currentYear, currentQuarter);
             }
 
             // Function to save all providers
             function saveAllProviders() {
-                saveProviders();
-                alert('All provider allocations saved successfully!');
+                // Get the current year and quarter from the selectors
+                const year = document.getElementById('year-select').value;
+                const quarter = document.getElementById('quarter-select').value;
+                
+                saveProviders(year, quarter);
+                
+                // Update the current period indicator
+                const periodIndicator = document.getElementById('current-period-indicator');
+                const periodText = document.getElementById('current-period-text');
+                periodText.textContent = `${year} Q${quarter}`;
+                periodIndicator.style.display = 'block';
+                
+                alert(`All provider allocations saved successfully for ${year} Q${quarter}!`);
             }
 
-            // Function to save providers to local storage
-            function saveProviders() {
-                localStorage.setItem('investgenie_providers', JSON.stringify(providers));
-                
-                // Also save to server (will implement with backend)
+            // Function to save providers to server
+            function saveProviders(year, quarter) {
+                // Also save to server
                 fetch('/api/providers/save', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ providers })
+                    body: JSON.stringify({ 
+                        providers: providers,
+                        year: year,
+                        quarter: quarter
+                    })
                 })
                 .then(response => response.json())
                 .catch(error => {
                     console.error('Error saving providers:', error);
                 });
-            }
-
-            // Function to load providers from local storage
-            function loadProviders() {
-                // Try to load from local storage first
-                const storedProviders = localStorage.getItem('investgenie_providers');
-                
-                if (storedProviders) {
-                    providers = JSON.parse(storedProviders);
-                    
-                    // Find the highest ID to set nextProviderId
-                    nextProviderId = providers.reduce((max, provider) => {
-                        const id = parseInt(provider.id.replace('provider-', ''));
-                        return id > max ? id : max;
-                    }, 0) + 1;
-                    
-                    // Add providers to UI
-                    providers.forEach(provider => {
-                        addProviderToUI(provider);
-                    });
-                } else {
-                    // Try to load from server
-                    fetch('/api/providers/list')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.providers.length > 0) {
-                            providers = data.providers;
-                            
-                            // Find the highest ID to set nextProviderId
-                            nextProviderId = providers.reduce((max, provider) => {
-                                const id = parseInt(provider.id.replace('provider-', ''));
-                                return id > max ? id : max;
-                            }, 0) + 1;
-                            
-                            // Add providers to UI
-                            providers.forEach(provider => {
-                                addProviderToUI(provider);
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading providers:', error);
-                    });
-                }
             }
 
             // Helper function to format currency
