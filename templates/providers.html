@@ -275,6 +275,15 @@
             
             // Load providers from local storage on page load
             document.addEventListener('DOMContentLoaded', function() {
+                // Check if we have saved period in localStorage
+                const savedYear = localStorage.getItem('investGenie_selectedYear');
+                const savedQuarter = localStorage.getItem('investGenie_selectedQuarter');
+                
+                if (savedYear && savedQuarter) {
+                    currentYear = parseInt(savedYear);
+                    currentQuarter = parseInt(savedQuarter);
+                }
+                
                 // Initialize the year select with the last 5 years
                 const yearSelect = document.getElementById('year-select');
                 for (let i = 0; i < 5; i++) {
@@ -285,13 +294,14 @@
                     yearSelect.appendChild(option);
                 }
                 
-                // Set the current quarter
+                // Set the selected year and quarter
+                document.getElementById('year-select').value = currentYear;
                 document.getElementById('quarter-select').value = currentQuarter;
                 
                 // Load periods for dropdown options
                 loadAvailablePeriods();
                 
-                // Load the most recent period or default to current
+                // Load the saved period or default to current
                 loadProvidersForPeriod(currentYear, currentQuarter);
                 
                 // Add event listeners
@@ -321,6 +331,10 @@
             
             // Function to load providers for a specific period
             function loadProvidersForPeriod(year, quarter) {
+                // Save selected period to localStorage
+                localStorage.setItem('investGenie_selectedYear', year);
+                localStorage.setItem('investGenie_selectedQuarter', quarter);
+                
                 fetch(`/api/providers/list?year=${year}&quarter=${quarter}`)
                     .then(response => response.json())
                     .then(data => {
@@ -605,6 +619,10 @@
                 // Get the current year and quarter from the selectors
                 const year = document.getElementById('year-select').value;
                 const quarter = document.getElementById('quarter-select').value;
+                
+                // Save to localStorage
+                localStorage.setItem('investGenie_selectedYear', year);
+                localStorage.setItem('investGenie_selectedQuarter', quarter);
                 
                 saveProviders(year, quarter);
                 

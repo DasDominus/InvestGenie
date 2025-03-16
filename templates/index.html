@@ -958,8 +958,8 @@
             // Allocation update button
             document.getElementById('update-allocation-btn').addEventListener('click', updateAllocation);
             
-            // Reset button
-            document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
+            // Reset allocation button (we've changed the handler above but we need to call this function)
+            // document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
             
             // CSV save/load buttons
             document.getElementById('save-csv-btn').addEventListener('click', saveAllocationToCSV);
@@ -990,6 +990,17 @@
                     loadAggregatedProviderAllocations();
                 }
             });
+            
+            // Check if we have a saved period in localStorage and load it
+            const savedYear = localStorage.getItem('investGenie_selectedYear');
+            const savedQuarter = localStorage.getItem('investGenie_selectedQuarter');
+            
+            if (savedYear && savedQuarter) {
+                loadAggregatedProviderAllocations(savedYear, savedQuarter);
+            } else {
+                // Load latest
+                loadAggregatedProviderAllocations();
+            }
         });
         
         // Find and load periods
@@ -1014,6 +1025,19 @@
                                 periodSelect.appendChild(option);
                             });
                         });
+                        
+                        // Select the current period if saved in localStorage
+                        const savedYear = localStorage.getItem('investGenie_selectedYear');
+                        const savedQuarter = localStorage.getItem('investGenie_selectedQuarter');
+                        
+                        if (savedYear && savedQuarter) {
+                            const optionValue = `${savedYear}_${savedQuarter}`;
+                            const option = Array.from(periodSelect.options).find(opt => opt.value === optionValue);
+                            
+                            if (option) {
+                                periodSelect.value = optionValue;
+                            }
+                        }
                     }
                 })
                 .catch(error => {
@@ -1026,6 +1050,10 @@
             let url = '/api/providers/aggregate';
             if (year && quarter) {
                 url += `?year=${year}&quarter=${quarter}`;
+                
+                // Save selected period to localStorage
+                localStorage.setItem('investGenie_selectedYear', year);
+                localStorage.setItem('investGenie_selectedQuarter', quarter);
             }
             
             fetch(url)
@@ -1079,6 +1107,10 @@
                             const periodText = document.getElementById('current-period-text');
                             periodText.textContent = `${data.period.year} Q${data.period.quarter}`;
                             periodIndicator.style.display = 'block';
+                            
+                            // If period was returned from API, save it to localStorage
+                            localStorage.setItem('investGenie_selectedYear', data.period.year);
+                            localStorage.setItem('investGenie_selectedQuarter', data.period.quarter);
                         } else {
                             document.getElementById('current-period-info').style.display = 'none';
                         }
@@ -1088,12 +1120,6 @@
                     console.error('Error loading aggregated allocations:', error);
                 });
         }
-        
-        // Override the reset allocation button click event to show a message
-        document.getElementById('reset-allocation-btn').addEventListener('click', function() {
-            alert('Please manage allocations through the Providers page.');
-            loadAggregatedProviderAllocations();
-        });
     </script>
 </body>
 </html> 
