@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Efficient Frontier Analysis</title>
+    <title>InvestGenie - Portfolio Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        body {
+            padding-top: 70px; /* Added padding for fixed navbar */
+        }
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -57,11 +60,36 @@
             font-weight: bold;
             color: #0d6efd;
         }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">InvestGenie</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/providers">Provider Allocations</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
-        <h1 class="text-center my-4">Portfolio Efficient Frontier Analysis</h1>
+        <h1 class="text-center mb-4">Portfolio Efficient Frontier Analysis</h1>
         
         <div class="row">
             <div class="col-lg-7">
@@ -116,7 +144,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <h4>Equity Allocation ($)</h4>
+                            <h4>Equity Allocation ($) <small class="text-muted">(Aggregated from providers - <a href="/providers">Provider Allocations</a>)</small></h4>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-sm input-grid" id="equity-allocation-grid">
                                     <thead>
@@ -131,23 +159,23 @@
                                     <tbody>
                                         <tr>
                                             <th>Small Cap</th>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="growth"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="blend"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="value"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="growth" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="blend" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="value" readonly></td>
                                             <td class="text-end fw-bold" id="equity-small-total">$0</td>
                                         </tr>
                                         <tr>
                                             <th>Mid Cap</th>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="growth"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="blend"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="value"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="growth" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="blend" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="value" readonly></td>
                                             <td class="text-end fw-bold" id="equity-mid-total">$0</td>
                                         </tr>
                                         <tr>
                                             <th>Large Cap</th>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="growth"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="blend"></td>
-                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="value"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="growth" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="blend" readonly></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="value" readonly></td>
                                             <td class="text-end fw-bold" id="equity-large-total">$0</td>
                                         </tr>
                                         <tr>
@@ -163,7 +191,7 @@
                         </div>
                         
                         <div class="mb-3">
-                            <h4>Fixed Income Allocation ($)</h4>
+                            <h4>Fixed Income Allocation ($) <small class="text-muted">(Aggregated from providers - <a href="/providers">Provider Allocations</a>)</small></h4>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-sm input-grid" id="fixed-income-allocation-grid">
                                     <thead>
@@ -178,23 +206,23 @@
                                     <tbody>
                                         <tr>
                                             <th>Short Term</th>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="low"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="mid"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="high"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="low" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="mid" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="high" readonly></td>
                                             <td class="text-end fw-bold" id="fixed-short-total">$0</td>
                                         </tr>
                                         <tr>
                                             <th>Mid Term</th>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="low"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="mid"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="high"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="low" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="mid" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="high" readonly></td>
                                             <td class="text-end fw-bold" id="fixed-mid-total">$0</td>
                                         </tr>
                                         <tr>
                                             <th>Long Term</th>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="low"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="mid"></td>
-                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="high"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="low" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="mid" readonly></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="high" readonly></td>
                                             <td class="text-end fw-bold" id="fixed-long-total">$0</td>
                                         </tr>
                                         <tr>
@@ -858,6 +886,60 @@
                     }
                 }
             });
+            
+            // Load aggregated provider allocations
+            loadAggregatedProviderAllocations();
+        });
+        
+        // Function to load aggregated provider allocations
+        function loadAggregatedProviderAllocations() {
+            fetch('/api/providers/aggregate')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const allocation = data.allocation;
+                        
+                        // Reset input fields without calling loadAggregatedProviderAllocations again
+                        document.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(cell => {
+                            cell.value = 0;
+                        });
+                        
+                        // Update equity cells
+                        for (const [key, value] of Object.entries(allocation.equity)) {
+                            const [row, col] = key.split('_');
+                            const cell = document.querySelector(`.equity-cell[data-row="${row}"][data-col="${col}"]`);
+                            if (cell) {
+                                cell.value = value;
+                            }
+                        }
+                        
+                        // Update fixed income cells
+                        for (const [key, value] of Object.entries(allocation.fixed_income)) {
+                            const [row, col] = key.split('_');
+                            const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
+                            if (cell) {
+                                cell.value = value;
+                            }
+                        }
+                        
+                        // Recalculate totals
+                        calculateEquityTotals();
+                        calculateFixedIncomeTotals();
+                        calculateGrandTotal();
+                        
+                        // Update portfolio based on allocation
+                        updateAllocation();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading aggregated allocations:', error);
+                });
+        }
+        
+        // Override the reset allocation button click event to show a message
+        document.getElementById('reset-allocation-btn').addEventListener('click', function() {
+            alert('Please manage allocations through the Providers page.');
+            loadAggregatedProviderAllocations();
         });
     </script>
 </body>

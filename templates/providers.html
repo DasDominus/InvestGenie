@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestGenie - Provider Allocations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 70px; /* Added padding for fixed navbar */
+            padding-bottom: 20px;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .allocation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .input-grid input {
+            width: 100%;
+            text-align: right;
+        }
+        .totals {
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .action-button {
+            min-width: 120px;
+        }
+        .provider-card {
+            margin-bottom: 20px;
+        }
+        .provider-controls {
+            margin-bottom: 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">InvestGenie</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/providers">Provider Allocations</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="mb-4">Provider Allocations</h1>
+
+        <div class="provider-controls">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="new-provider-name" placeholder="Provider Name (e.g., Chase, Charles Schwab)">
+                        <button class="btn btn-primary" id="add-provider-btn">Add Provider</button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-success" id="save-all-providers-btn">Save All Providers</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="provider-list">
+            <!-- Provider cards will be dynamically added here -->
+        </div>
+
+        <!-- Provider Template -->
+        <template id="provider-template">
+            <div class="card provider-card" data-provider-id="">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="provider-name mb-0"></h3>
+                        <div>
+                            <button class="btn btn-sm btn-danger remove-provider-btn">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h4>Equity Allocation ($)</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm input-grid equity-allocation-grid">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Growth</th>
+                                        <th>Blend</th>
+                                        <th>Value</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Small Cap</th>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="growth"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="blend"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="value"></td>
+                                        <td class="text-end fw-bold equity-small-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Mid Cap</th>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="growth"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="blend"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="value"></td>
+                                        <td class="text-end fw-bold equity-mid-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Large Cap</th>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="growth"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="blend"></td>
+                                        <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="value"></td>
+                                        <td class="text-end fw-bold equity-large-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total</th>
+                                        <td class="text-end fw-bold equity-growth-total">$0</td>
+                                        <td class="text-end fw-bold equity-blend-total">$0</td>
+                                        <td class="text-end fw-bold equity-value-total">$0</td>
+                                        <td class="text-end fw-bold equity-grand-total">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h4>Fixed Income Allocation ($)</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm input-grid fixed-income-allocation-grid">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Low Risk</th>
+                                        <th>Mid Risk</th>
+                                        <th>High Risk</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Short Term</th>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="low"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="mid"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="high"></td>
+                                        <td class="text-end fw-bold fixed-short-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Mid Term</th>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="low"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="mid"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="high"></td>
+                                        <td class="text-end fw-bold fixed-mid-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Long Term</th>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="low"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="mid"></td>
+                                        <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="high"></td>
+                                        <td class="text-end fw-bold fixed-long-total">$0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total</th>
+                                        <td class="text-end fw-bold fixed-low-total">$0</td>
+                                        <td class="text-end fw-bold fixed-mid-total">$0</td>
+                                        <td class="text-end fw-bold fixed-high-total">$0</td>
+                                        <td class="text-end fw-bold fixed-grand-total">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 totals">
+                        <div class="row">
+                            <div class="col-md-4">Equity: <span class="total-equity">$0</span></div>
+                            <div class="col-md-4">Fixed Income: <span class="total-fixed-income">$0</span></div>
+                            <div class="col-md-4">Grand Total: <span class="provider-grand-total">$0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Provider management
+            let providers = [];
+            let nextProviderId = 1;
+
+            // Load providers from local storage on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadProviders();
+                
+                // Add event listeners
+                document.getElementById('add-provider-btn').addEventListener('click', addProvider);
+                document.getElementById('save-all-providers-btn').addEventListener('click', saveAllProviders);
+            });
+
+            // Function to add a new provider
+            function addProvider() {
+                const providerName = document.getElementById('new-provider-name').value.trim();
+                
+                if (!providerName) {
+                    alert('Please enter a provider name.');
+                    return;
+                }
+                
+                // Check if provider already exists
+                if (providers.some(p => p.name.toLowerCase() === providerName.toLowerCase())) {
+                    alert('A provider with this name already exists.');
+                    return;
+                }
+                
+                // Create new provider
+                const providerId = 'provider-' + nextProviderId++;
+                const provider = {
+                    id: providerId,
+                    name: providerName,
+                    allocation: {
+                        equity: {}, // Will store values like {small_growth: 1000}
+                        fixed_income: {} // Will store values like {short_low: 500}
+                    }
+                };
+                
+                providers.push(provider);
+                
+                // Add provider to UI
+                addProviderToUI(provider);
+                
+                // Clear input
+                document.getElementById('new-provider-name').value = '';
+                
+                // Save providers
+                saveProviders();
+            }
+
+            // Function to add provider to UI
+            function addProviderToUI(provider) {
+                // Clone template
+                const template = document.getElementById('provider-template');
+                const providerCard = template.content.cloneNode(true).querySelector('.provider-card');
+                
+                // Set provider ID and name
+                providerCard.dataset.providerId = provider.id;
+                providerCard.querySelector('.provider-name').textContent = provider.name;
+                
+                // Add event listeners for inputs
+                providerCard.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(input => {
+                    input.addEventListener('input', function() {
+                        updateProviderTotals(providerCard);
+                        updateProviderAllocation(provider.id);
+                    });
+                    
+                    // Set initial values if they exist
+                    const type = input.classList.contains('equity-cell') ? 'equity' : 'fixed_income';
+                    const row = input.dataset.row;
+                    const col = input.dataset.col;
+                    const key = `${row}_${col}`;
+                    
+                    if (type === 'equity' && provider.allocation.equity[key]) {
+                        input.value = provider.allocation.equity[key];
+                    } else if (type === 'fixed_income' && provider.allocation.fixed_income[key]) {
+                        input.value = provider.allocation.fixed_income[key];
+                    }
+                });
+                
+                // Add remove event listener
+                providerCard.querySelector('.remove-provider-btn').addEventListener('click', function() {
+                    if (confirm(`Are you sure you want to remove ${provider.name}?`)) {
+                        removeProvider(provider.id);
+                    }
+                });
+                
+                // Add to provider list
+                document.getElementById('provider-list').appendChild(providerCard);
+                
+                // Calculate totals
+                updateProviderTotals(providerCard);
+            }
+
+            // Function to update provider totals
+            function updateProviderTotals(providerCard) {
+                // Calculate equity totals
+                let equityTotal = 0;
+                
+                // Calculate row totals for equity
+                ['small', 'mid', 'large'].forEach(row => {
+                    let rowTotal = 0;
+                    providerCard.querySelectorAll(`.equity-cell[data-row="${row}"]`).forEach(cell => {
+                        rowTotal += Number(cell.value) || 0;
+                    });
+                    providerCard.querySelector(`.equity-${row}-total`).textContent = formatCurrency(rowTotal);
+                    equityTotal += rowTotal;
+                });
+                
+                // Calculate column totals for equity
+                ['growth', 'blend', 'value'].forEach(col => {
+                    let colTotal = 0;
+                    providerCard.querySelectorAll(`.equity-cell[data-col="${col}"]`).forEach(cell => {
+                        colTotal += Number(cell.value) || 0;
+                    });
+                    providerCard.querySelector(`.equity-${col}-total`).textContent = formatCurrency(colTotal);
+                });
+                
+                // Set equity grand total
+                providerCard.querySelector('.equity-grand-total').textContent = formatCurrency(equityTotal);
+                providerCard.querySelector('.total-equity').textContent = formatCurrency(equityTotal);
+                
+                // Calculate fixed income totals
+                let fixedIncomeTotal = 0;
+                
+                // Calculate row totals for fixed income
+                ['short', 'mid', 'long'].forEach(row => {
+                    let rowTotal = 0;
+                    providerCard.querySelectorAll(`.fixed-income-cell[data-row="${row}"]`).forEach(cell => {
+                        rowTotal += Number(cell.value) || 0;
+                    });
+                    providerCard.querySelector(`.fixed-${row}-total`).textContent = formatCurrency(rowTotal);
+                    fixedIncomeTotal += rowTotal;
+                });
+                
+                // Calculate column totals for fixed income
+                ['low', 'mid', 'high'].forEach(col => {
+                    let colTotal = 0;
+                    providerCard.querySelectorAll(`.fixed-income-cell[data-col="${col}"]`).forEach(cell => {
+                        colTotal += Number(cell.value) || 0;
+                    });
+                    providerCard.querySelector(`.fixed-${col}-total`).textContent = formatCurrency(colTotal);
+                });
+                
+                // Set fixed income grand total
+                providerCard.querySelector('.fixed-grand-total').textContent = formatCurrency(fixedIncomeTotal);
+                providerCard.querySelector('.total-fixed-income').textContent = formatCurrency(fixedIncomeTotal);
+                
+                // Set overall grand total
+                const grandTotal = equityTotal + fixedIncomeTotal;
+                providerCard.querySelector('.provider-grand-total').textContent = formatCurrency(grandTotal);
+            }
+
+            // Function to update provider allocation
+            function updateProviderAllocation(providerId) {
+                const provider = providers.find(p => p.id === providerId);
+                if (!provider) return;
+                
+                const providerCard = document.querySelector(`.provider-card[data-provider-id="${providerId}"]`);
+                
+                // Update equity allocation
+                provider.allocation.equity = {};
+                providerCard.querySelectorAll('.equity-cell').forEach(cell => {
+                    const row = cell.dataset.row;
+                    const col = cell.dataset.col;
+                    const value = Number(cell.value) || 0;
+                    
+                    if (value > 0) {
+                        const key = `${row}_${col}`;
+                        provider.allocation.equity[key] = value;
+                    }
+                });
+                
+                // Update fixed income allocation
+                provider.allocation.fixed_income = {};
+                providerCard.querySelectorAll('.fixed-income-cell').forEach(cell => {
+                    const row = cell.dataset.row;
+                    const col = cell.dataset.col;
+                    const value = Number(cell.value) || 0;
+                    
+                    if (value > 0) {
+                        const key = `${row}_${col}`;
+                        provider.allocation.fixed_income[key] = value;
+                    }
+                });
+                
+                // Save providers
+                saveProviders();
+            }
+
+            // Function to remove provider
+            function removeProvider(providerId) {
+                // Remove from array
+                providers = providers.filter(p => p.id !== providerId);
+                
+                // Remove from UI
+                const providerCard = document.querySelector(`.provider-card[data-provider-id="${providerId}"]`);
+                if (providerCard) {
+                    providerCard.remove();
+                }
+                
+                // Save providers
+                saveProviders();
+            }
+
+            // Function to save all providers
+            function saveAllProviders() {
+                saveProviders();
+                alert('All provider allocations saved successfully!');
+            }
+
+            // Function to save providers to local storage
+            function saveProviders() {
+                localStorage.setItem('investgenie_providers', JSON.stringify(providers));
+                
+                // Also save to server (will implement with backend)
+                fetch('/api/providers/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ providers })
+                })
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Error saving providers:', error);
+                });
+            }
+
+            // Function to load providers from local storage
+            function loadProviders() {
+                // Try to load from local storage first
+                const storedProviders = localStorage.getItem('investgenie_providers');
+                
+                if (storedProviders) {
+                    providers = JSON.parse(storedProviders);
+                    
+                    // Find the highest ID to set nextProviderId
+                    nextProviderId = providers.reduce((max, provider) => {
+                        const id = parseInt(provider.id.replace('provider-', ''));
+                        return id > max ? id : max;
+                    }, 0) + 1;
+                    
+                    // Add providers to UI
+                    providers.forEach(provider => {
+                        addProviderToUI(provider);
+                    });
+                } else {
+                    // Try to load from server
+                    fetch('/api/providers/list')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.providers.length > 0) {
+                            providers = data.providers;
+                            
+                            // Find the highest ID to set nextProviderId
+                            nextProviderId = providers.reduce((max, provider) => {
+                                const id = parseInt(provider.id.replace('provider-', ''));
+                                return id > max ? id : max;
+                            }, 0) + 1;
+                            
+                            // Add providers to UI
+                            providers.forEach(provider => {
+                                addProviderToUI(provider);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading providers:', error);
+                    });
+                }
+            }
+
+            // Helper function to format currency
+            function formatCurrency(value) {
+                return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+        </script>
+    </div>
+</body>
+</html> 
