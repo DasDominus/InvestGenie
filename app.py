@@ -8,14 +8,10 @@ import plotly.graph_objects as go
 from stock_handler import StockHandler
 from fixed_income_handler import FixedIncomeHandler
 from efficient_frontier import EfficientFrontier
-from morningstar_style_handler import MorningstarStyleHandler
 
 app = Flask(__name__)
 stock_handler = StockHandler()
 fixed_income_handler = FixedIncomeHandler()
-
-# Create a Morningstar style box handler
-morningstar_handler = MorningstarStyleHandler(stock_handler)
 
 # Create a combined handler by merging data from both handlers
 class CombinedHandler:
@@ -212,55 +208,6 @@ def get_assets():
     }
     
     return jsonify(asset_data)
-
-@app.route('/api/morningstar-style-box', methods=['GET'])
-def get_morningstar_style_box():
-    """Return the current Morningstar style box configuration."""
-    style_box_data = morningstar_handler.get_style_box_summary()
-    return jsonify(style_box_data)
-
-@app.route('/api/morningstar-style-box', methods=['POST'])
-def set_morningstar_allocations():
-    """Set monetary allocations for the Morningstar style box categories."""
-    data = request.get_json()
-    allocations = data.get('allocations', {})
-    
-    # Set the allocations
-    results = morningstar_handler.set_monetary_allocations(allocations)
-    
-    # Get the updated style box data
-    style_box_data = morningstar_handler.get_style_box_summary()
-    style_box_data['update_results'] = results
-    
-    return jsonify(style_box_data)
-
-@app.route('/api/morningstar-portfolio', methods=['GET'])
-def get_morningstar_portfolio():
-    """Calculate portfolio metrics based on Morningstar style box allocations."""
-    # Get weights based on monetary allocations
-    weights = morningstar_handler.get_asset_weights()
-    
-    # Convert dict to proper format for the efficient frontier calculator
-    weight_list = [weights.get(asset, 0) for asset in combined_handler.get_assets()]
-    
-    # Normalize weights
-    total_weight = sum(weight_list)
-    if total_weight > 0:
-        weight_list = np.array(weight_list) / total_weight
-    
-    # Calculate portfolio metrics
-    portfolio_data = ef_calculator.calculate_portfolio_metrics(weight_list.tolist())
-    
-    # Add style box data
-    portfolio_data['style_box'] = morningstar_handler.get_style_box_summary()
-    
-    # Add asset monetary values
-    portfolio_data['asset_values'] = morningstar_handler.get_asset_monetary_values()
-    
-    # Add total portfolio value
-    portfolio_data['total_value'] = morningstar_handler.get_total_portfolio_value()
-    
-    return jsonify(portfolio_data)
 
 if __name__ == '__main__':
     app.run(debug=True) 
