@@ -95,7 +95,7 @@
                                 <option value="4">Q4</option>
                             </select>
                         </div>
-                        <button class="btn btn-outline-primary btn-sm me-2" id="load-period-btn">Load Period</button>
+                        <button class="btn btn-outline-secondary btn-sm me-2" id="copy-last-period-btn">Copy Last Allocation</button>
                         <button class="btn btn-success" id="save-providers-btn">Save</button>
                     </div>
                 </div>
@@ -307,11 +307,22 @@
                 // Add event listeners
                 document.getElementById('add-provider-btn').addEventListener('click', addProvider);
                 document.getElementById('save-providers-btn').addEventListener('click', saveAllProviders);
-                document.getElementById('load-period-btn').addEventListener('click', function() {
-                    const year = document.getElementById('year-select').value;
+                
+                // Add event listeners to automatically load when year or quarter changes
+                document.getElementById('year-select').addEventListener('change', function() {
+                    const year = this.value;
                     const quarter = document.getElementById('quarter-select').value;
                     loadProvidersForPeriod(year, quarter);
                 });
+                
+                document.getElementById('quarter-select').addEventListener('change', function() {
+                    const year = document.getElementById('year-select').value;
+                    const quarter = this.value;
+                    loadProvidersForPeriod(year, quarter);
+                });
+                
+                // Add event listener for the Copy Last Allocation button
+                document.getElementById('copy-last-period-btn').addEventListener('click', copyLastPeriod);
             });
             
             // Function to load available periods
@@ -409,8 +420,12 @@
                 // Clear input
                 document.getElementById('new-provider-name').value = '';
                 
-                // Save providers
-                saveProviders(currentYear, currentQuarter);
+                // Get the currently selected year and quarter from the UI
+                const selectedYear = document.getElementById('year-select').value;
+                const selectedQuarter = document.getElementById('quarter-select').value;
+                
+                // Save providers for the specific selected period
+                saveProviders(selectedYear, selectedQuarter);
             }
 
             // Function to add provider to UI
@@ -595,8 +610,12 @@
                     }
                 });
                 
-                // Save providers
-                saveProviders(currentYear, currentQuarter);
+                // Get the currently selected year and quarter from the UI
+                const selectedYear = document.getElementById('year-select').value;
+                const selectedQuarter = document.getElementById('quarter-select').value;
+                
+                // Save providers for the specific selected period
+                saveProviders(selectedYear, selectedQuarter);
             }
 
             // Function to remove provider
@@ -610,8 +629,12 @@
                     providerCard.remove();
                 }
                 
-                // Save providers
-                saveProviders(currentYear, currentQuarter);
+                // Get the currently selected year and quarter from the UI
+                const selectedYear = document.getElementById('year-select').value;
+                const selectedQuarter = document.getElementById('quarter-select').value;
+                
+                // Save providers for the specific selected period
+                saveProviders(selectedYear, selectedQuarter);
             }
 
             // Function to save all providers
@@ -637,7 +660,7 @@
 
             // Function to save providers to server
             function saveProviders(year, quarter) {
-                // Also save to server
+                // This function will only update the allocation file for the specified year and quarter
                 fetch('/api/providers/save', {
                     method: 'POST',
                     headers: {
@@ -650,14 +673,79 @@
                     })
                 })
                 .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Providers saved for ${year} Q${quarter}`);
+                    } else {
+                        console.error(`Error saving providers: ${data.message}`);
+                    }
+                })
                 .catch(error => {
                     console.error('Error saving providers:', error);
                 });
+                
+                // Also update the global tracking variables to match current selection
+                currentYear = year;
+                currentQuarter = quarter;
             }
 
             // Helper function to format currency
             function formatCurrency(value) {
                 return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+
+            // Function to copy allocations from the previous period
+            function copyLastPeriod() {
+                const currentYear = parseInt(document.getElementById('year-select').value);
+                const currentQuarter = parseInt(document.getElementById('quarter-select').value);
+                
+                // Calculate previous period
+                let prevYear = currentYear;
+                let prevQuarter = currentQuarter - 1;
+                
+                // If it's Q1, go to Q4 of the previous year
+                if (prevQuarter < 1) {
+                    prevYear = currentYear - 1;
+                    prevQuarter = 4;
+                }
+                
+                // Try to load from previous period directly
+                fetch(`/api/providers/list?year=${prevYear}&quarter=${prevQuarter}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.providers && data.providers.length > 0) {
+                            // Store current year and quarter to restore later
+                            const targetYear = currentYear;
+                            const targetQuarter = currentQuarter;
+                            
+                            // We have the previous period's providers, now save them to the current period
+                            providers = data.providers;
+                            
+                            // Clear the provider list UI and rebuild it
+                            document.getElementById('provider-list').innerHTML = '';
+                            providers.forEach(provider => {
+                                addProviderToUI(provider);
+                            });
+                            
+                            // Save these providers to the current period
+                            saveProviders(targetYear, targetQuarter);
+                            
+                            // Update UI
+                            const periodIndicator = document.getElementById('current-period-indicator');
+                            const periodText = document.getElementById('current-period-text');
+                            periodText.textContent = `${targetYear} Q${targetQuarter}`;
+                            periodIndicator.style.display = 'block';
+                            
+                            // Show success message
+                            alert(`Allocations copied from ${prevYear} Q${prevQuarter} to ${targetYear} Q${targetQuarter}`);
+                        } else {
+                            throw new Error(`No data exists for ${prevYear} Q${prevQuarter}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error copying from previous period:', error);
+                        alert('No allocation data found for the previous period. Please create new allocations for this period.');
+                    });
             }
         </script>
     </div>

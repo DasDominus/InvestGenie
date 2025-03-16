@@ -139,7 +139,6 @@
                                         <option value="">Latest</option>
                                         <!-- Will be populated with available periods -->
                                     </select>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="load-period-btn">Load</button>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="save-csv-btn">Save CSV</button>
                                 <div class="input-group">
@@ -979,9 +978,9 @@
             // Load available periods
             loadAvailablePeriods();
             
-            // Add event listener for loading specific periods
-            document.getElementById('load-period-btn').addEventListener('click', () => {
-                const periodValue = document.getElementById('period-select').value;
+            // Add event listener to automatically load when period changes
+            document.getElementById('period-select').addEventListener('change', function() {
+                const periodValue = this.value;
                 if (periodValue) {
                     const [year, quarter] = periodValue.split('_');
                     loadAggregatedProviderAllocations(year, quarter);
@@ -1054,6 +1053,17 @@
                 // Save selected period to localStorage
                 localStorage.setItem('investGenie_selectedYear', year);
                 localStorage.setItem('investGenie_selectedQuarter', quarter);
+                
+                // Update the dropdown selection if it exists
+                const periodSelect = document.getElementById('period-select');
+                if (periodSelect) {
+                    const optionValue = `${year}_${quarter}`;
+                    const option = Array.from(periodSelect.options).find(opt => opt.value === optionValue);
+                    
+                    if (option) {
+                        periodSelect.value = optionValue;
+                    }
+                }
             }
             
             fetch(url)
