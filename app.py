@@ -75,7 +75,9 @@ def calculate_portfolio():
         weight_sum = sum(weight_list)
         if weight_sum > 0:
             weight_list = np.array(weight_list) / weight_sum
-        weights = weight_list.tolist()
+            weights = weight_list.tolist()
+        else:
+            weights = weight_list
     
     portfolio_data = ef_calculator.calculate_portfolio_metrics(weights)
     return jsonify(portfolio_data)
