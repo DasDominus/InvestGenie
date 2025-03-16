@@ -10,22 +10,15 @@ class EfficientFrontier:
     Class to calculate and optimize portfolios based on the efficient frontier.
     """
     
-    def __init__(self, handler):
-        """Initialize with a data handler object."""
-        self.handler = handler
-        self.assets = handler.get_assets()
-        
-        # Get asset types if available
-        self.equity_assets = []
-        self.fixed_income_assets = []
-        if hasattr(handler, 'get_equity_assets') and hasattr(handler, 'get_fixed_income_assets'):
-            self.equity_assets = handler.get_equity_assets()
-            self.fixed_income_assets = handler.get_fixed_income_assets()
+    def __init__(self, stock_handler):
+        """Initialize with a stock handler object."""
+        self.stock_handler = stock_handler
+        self.assets = stock_handler.get_assets()
         
         # Calculate returns and covariance matrix
-        self.returns = handler.get_returns()
-        self.mean_returns = handler.get_mean_returns()
-        self.cov_matrix = handler.get_cov_matrix()
+        self.returns = stock_handler.get_returns()
+        self.mean_returns = stock_handler.get_mean_returns()
+        self.cov_matrix = stock_handler.get_cov_matrix()
         
         # Calculate annual returns and covariance (assuming 252 trading days per year)
         self.annual_returns = self.mean_returns * 252
@@ -166,109 +159,23 @@ class EfficientFrontier:
         """Constraint function for efficient_return: return = target_return."""
         return self._portfolio_return(weights) - target_return
     
-    def _get_asset_type_constraint(self, weights, asset_type, min_val=None, max_val=None):
-        """
-        Create a constraint function for an asset type's allocation.
-        
-        Args:
-            weights: The portfolio weights
-            asset_type: 'equity' or 'fixed_income'
-            min_val: Minimum allocation to this asset type (0-1)
-            max_val: Maximum allocation to this asset type (0-1)
-            
-        Returns:
-            Function that will be > 0 if the constraint is satisfied
-        """
-        assets = self.equity_assets if asset_type == 'equity' else self.fixed_income_assets
-        asset_indices = [self.assets.index(asset) for asset in assets if asset in self.assets]
-        
-        # Sum the weights for this asset type
-        type_weight = sum(weights[i] for i in asset_indices)
-        
-        if min_val is not None and max_val is not None:
-            # Both min and max constraints
-            return min_val <= type_weight <= max_val
-        elif min_val is not None:
-            # Just min constraint
-            return type_weight >= min_val
-        elif max_val is not None:
-            # Just max constraint
-            return type_weight <= max_val
-        else:
-            # No constraint
-            return True
-    
-    def _equity_min_constraint(self, weights, min_val):
-        """Constraint function for minimum equity allocation."""
-        indices = [self.assets.index(asset) for asset in self.equity_assets if asset in self.assets]
-        return sum(weights[i] for i in indices) - min_val
-    
-    def _equity_max_constraint(self, weights, max_val):
-        """Constraint function for maximum equity allocation."""
-        indices = [self.assets.index(asset) for asset in self.equity_assets if asset in self.assets]
-        return max_val - sum(weights[i] for i in indices)
-    
-    def _fixed_income_min_constraint(self, weights, min_val):
-        """Constraint function for minimum fixed income allocation."""
-        indices = [self.assets.index(asset) for asset in self.fixed_income_assets if asset in self.assets]
-        return sum(weights[i] for i in indices) - min_val
-    
-    def _fixed_income_max_constraint(self, weights, max_val):
-        """Constraint function for maximum fixed income allocation."""
-        indices = [self.assets.index(asset) for asset in self.fixed_income_assets if asset in self.assets]
-        return max_val - sum(weights[i] for i in indices)
-    
-    def _optimize(self, objective='max_sharpe', target_return=None, constraints=None):
+    def _optimize(self, objective='max_sharpe', target_return=None):
         """
         Optimize portfolio based on objective.
         
         Args:
             objective: One of 'min_volatility', 'max_sharpe', 'efficient_return'
             target_return: Target return for 'efficient_return' objective
-            constraints: Dict with asset type constraints (min_equity, max_equity, etc.)
             
         Returns:
             list: Optimized weights
         """
         num_assets = len(self.assets)
         args = ()
-        opt_constraints = []
-        
-        # Default constraints
-        if constraints is None:
-            constraints = {}
+        constraints = []
         
         # Constraint: sum of weights = 1
-        opt_constraints.append({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-        
-        # Add asset type constraints if provided
-        if self.equity_assets and 'min_equity' in constraints:
-            opt_constraints.append({
-                'type': 'ineq',
-                'fun': self._equity_min_constraint,
-                'args': (constraints['min_equity'],)
-            })
-        
-        if self.equity_assets and 'max_equity' in constraints:
-            opt_constraints.append({
-                'type': 'ineq',
-                'fun': self._equity_max_constraint,
-                'args': (constraints['max_equity'],)
-            })
-        
-        if self.fixed_income_assets and 'min_fixed_income' in constraints:
-            opt_constraints.append({
-                'type': 'ineq',
-                'fun': self._fixed_income_min_constraint,
-                'args': (constraints['min_fixed_income'],)
-            })
-        
-        if self.fixed_income_assets and 'max_fixed_income' in constraints:
-            opt_constraints.append({
-                'type': 'ineq',
-                'fun': self._fixed_income_max_constraint,
-                'args': (constraints['max_fixed_income'],)
-            })
+        constraints.append({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
         
         # Set objective function
         if objective == 'min_volatility':
@@ -279,7 +186,7 @@ class EfficientFrontier:
             if target_return is None:
                 raise ValueError("Target return must be provided for 'efficient_return' objective")
             objective_function = self._portfolio_volatility
-            opt_constraints.append({
+            constraints.append({
                 'type': 'eq',
                 'fun': lambda x: self._portfolio_return_constraint(x, target_return),
                 'args': (target_return,)
@@ -299,7 +206,7 @@ class EfficientFrontier:
             initial_weights,
             method='SLSQP',
             bounds=bounds,
-            constraints=opt_constraints,
+            constraints=constraints,
             args=args
         )
         
@@ -310,32 +217,20 @@ class EfficientFrontier:
         # Return the optimized weights
         return result['x']
     
-    def optimize_portfolio(self, objective='max_sharpe', constraints=None):
+    def optimize_portfolio(self, objective='max_sharpe'):
         """
         Optimize portfolio and return metrics.
         
         Args:
             objective: One of 'min_volatility', 'max_sharpe'
-            constraints: Dict with asset type constraints
             
         Returns:
             dict: Optimized portfolio metrics
         """
-        weights = self._optimize(objective, constraints=constraints)
+        weights = self._optimize(objective)
         metrics = self.calculate_portfolio_metrics(weights)
-        
-        # Calculate asset type allocations
-        if self.equity_assets and self.fixed_income_assets:
-            equity_weight = sum(metrics['weights'][asset] for asset in self.equity_assets if asset in metrics['weights'])
-            fixed_income_weight = sum(metrics['weights'][asset] for asset in self.fixed_income_assets if asset in metrics['weights'])
-            
-            metrics['asset_type_weights'] = {
-                'equity': equity_weight,
-                'fixed_income': fixed_income_weight
-            }
         
         return {
             'objective': objective,
-            'metrics': metrics,
-            'constraints': constraints
+            'metrics': metrics
         } 
