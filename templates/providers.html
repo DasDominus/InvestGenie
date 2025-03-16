@@ -402,13 +402,42 @@
                 
                 // Create new provider
                 const providerId = 'provider-' + nextProviderId++;
+                
+                // Initialize all allocation categories with default values of $0
                 const provider = {
                     id: providerId,
                     name: providerName,
                     allocation: {
-                        equity: {}, // Will store values like {small_growth: 1000}
-                        fixed_income: {}, // Will store values like {short_low: 500}
-                        cash: {} // New field for cash allocations
+                        equity: {
+                            // Default all equity allocations to 0
+                            'small_growth': 0,
+                            'small_blend': 0,
+                            'small_value': 0,
+                            'mid_growth': 0,
+                            'mid_blend': 0,
+                            'mid_value': 0,
+                            'large_growth': 0,
+                            'large_blend': 0,
+                            'large_value': 0
+                        },
+                        fixed_income: {
+                            // Default all fixed income allocations to 0
+                            'short_low': 0,
+                            'short_mid': 0,
+                            'short_high': 0,
+                            'mid_low': 0,
+                            'mid_mid': 0,
+                            'mid_high': 0,
+                            'long_low': 0,
+                            'long_mid': 0,
+                            'long_high': 0
+                        },
+                        cash: {
+                            // Default all cash allocations to 0
+                            'cash': { amount: 0, notes: '' },
+                            'money_market': { amount: 0, notes: '' },
+                            'other_liquid': { amount: 0, notes: '' }
+                        }
                     }
                 };
                 
@@ -454,15 +483,17 @@
                         const col = input.dataset.col;
                         const key = `${row}_${col}`;
                         
-                        if (type === 'equity' && provider.allocation.equity[key]) {
-                            input.value = provider.allocation.equity[key];
-                        } else if (type === 'fixed_income' && provider.allocation.fixed_income[key]) {
-                            input.value = provider.allocation.fixed_income[key];
+                        if (type === 'equity') {
+                            input.value = provider.allocation.equity[key] || 0;
+                        } else if (type === 'fixed_income') {
+                            input.value = provider.allocation.fixed_income[key] || 0;
                         }
                     } else if (type === 'cash') {
                         const cashType = input.dataset.type;
                         if (provider.allocation.cash[cashType]) {
-                            input.value = provider.allocation.cash[cashType].amount;
+                            input.value = provider.allocation.cash[cashType].amount || 0;
+                        } else {
+                            input.value = 0;
                         }
                     }
                 });
@@ -472,6 +503,8 @@
                     const cashType = input.dataset.type;
                     if (provider.allocation.cash[cashType] && provider.allocation.cash[cashType].notes) {
                         input.value = provider.allocation.cash[cashType].notes;
+                    } else {
+                        input.value = '';
                     }
                     
                     input.addEventListener('input', function() {
@@ -567,47 +600,65 @@
                 
                 const providerCard = document.querySelector(`.provider-card[data-provider-id="${providerId}"]`);
                 
-                // Update equity allocation
-                provider.allocation.equity = {};
+                // Update equity allocation - always set all values
+                provider.allocation.equity = {
+                    'small_growth': 0,
+                    'small_blend': 0,
+                    'small_value': 0,
+                    'mid_growth': 0,
+                    'mid_blend': 0,
+                    'mid_value': 0,
+                    'large_growth': 0,
+                    'large_blend': 0,
+                    'large_value': 0
+                };
+                
                 providerCard.querySelectorAll('.equity-cell').forEach(cell => {
                     const row = cell.dataset.row;
                     const col = cell.dataset.col;
                     const value = Number(cell.value) || 0;
-                    
-                    if (value > 0) {
-                        const key = `${row}_${col}`;
-                        provider.allocation.equity[key] = value;
-                    }
+                    const key = `${row}_${col}`;
+                    provider.allocation.equity[key] = value;
                 });
                 
-                // Update fixed income allocation
-                provider.allocation.fixed_income = {};
+                // Update fixed income allocation - always set all values
+                provider.allocation.fixed_income = {
+                    'short_low': 0,
+                    'short_mid': 0,
+                    'short_high': 0,
+                    'mid_low': 0,
+                    'mid_mid': 0,
+                    'mid_high': 0,
+                    'long_low': 0,
+                    'long_mid': 0,
+                    'long_high': 0
+                };
+                
                 providerCard.querySelectorAll('.fixed-income-cell').forEach(cell => {
                     const row = cell.dataset.row;
                     const col = cell.dataset.col;
                     const value = Number(cell.value) || 0;
-                    
-                    if (value > 0) {
-                        const key = `${row}_${col}`;
-                        provider.allocation.fixed_income[key] = value;
-                    }
+                    const key = `${row}_${col}`;
+                    provider.allocation.fixed_income[key] = value;
                 });
                 
-                // Update cash allocation
-                provider.allocation.cash = {};
+                // Update cash allocation - always set all values
+                provider.allocation.cash = {
+                    'cash': { amount: 0, notes: '' },
+                    'money_market': { amount: 0, notes: '' },
+                    'other_liquid': { amount: 0, notes: '' }
+                };
+                
                 providerCard.querySelectorAll('.cash-cell').forEach(cell => {
                     const cashType = cell.dataset.type;
                     const value = Number(cell.value) || 0;
+                    const notesField = providerCard.querySelector(`.cash-notes[data-type="${cashType}"]`);
+                    const notes = notesField ? notesField.value : '';
                     
-                    if (value > 0) {
-                        const notesField = providerCard.querySelector(`.cash-notes[data-type="${cashType}"]`);
-                        const notes = notesField ? notesField.value : '';
-                        
-                        provider.allocation.cash[cashType] = {
-                            amount: value,
-                            notes: notes
-                        };
-                    }
+                    provider.allocation.cash[cashType] = {
+                        amount: value,
+                        notes: notes
+                    };
                 });
                 
                 // Get the currently selected year and quarter from the UI

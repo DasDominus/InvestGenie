@@ -134,16 +134,11 @@
                         <div class="allocation-header">
                             <h3>Asset Allocation</h3>
                             <div class="csv-controls">
-                                <div class="period-selector d-flex align-items-center me-2">
-                                    <select class="form-select form-select-sm me-1" id="period-select">
+                                <div class="period-selector d-flex align-items-center">
+                                    <select class="form-select form-select-sm" id="period-select">
                                         <option value="">Latest</option>
                                         <!-- Will be populated with available periods -->
                                     </select>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="save-csv-btn">Save CSV</button>
-                                <div class="input-group">
-                                    <input type="file" class="form-control form-control-sm" id="load-csv-input" accept=".csv">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="load-csv-btn">Load</button>
                                 </div>
                             </div>
                         </div>
@@ -644,7 +639,7 @@
             document.querySelectorAll('.equity-cell').forEach(cell => {
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
-                const value = Number(cell.value) || 0;
+                const value = parseFloat(cell.value) || 0;
                 
                 if (value > 0) {
                     const assetKey = `equity_${row}_${col}`;
@@ -656,7 +651,7 @@
             document.querySelectorAll('.fixed-income-cell').forEach(cell => {
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
-                const value = Number(cell.value) || 0;
+                const value = parseFloat(cell.value) || 0;
                 
                 if (value > 0) {
                     const assetKey = `fixed_${row}_${col}`;
@@ -667,7 +662,7 @@
             // Process cash allocation
             document.querySelectorAll('.cash-cell').forEach(cell => {
                 const cashType = cell.dataset.type;
-                const value = Number(cell.value) || 0;
+                const value = parseFloat(cell.value) || 0;
                 
                 if (value > 0) {
                     const assetKey = `cash_${cashType}`;
@@ -684,25 +679,30 @@
             
             if (!allocationWeights) return;
             
-            // Calculate portfolio with new weights
-            fetch('/api/portfolio', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ weights: allocationWeights })
-            })
-            .then(response => response.json())
-            .then(data => {
-                currentPortfolio = data;
-                updatePortfolioInfo();
-                plotEfficientFrontier();
-                // alert('Portfolio updated based on asset allocation.');
-            })
-            .catch(error => {
-                console.error('Error updating portfolio from allocation:', error);
-                alert('Error updating portfolio. Please try again.');
-            });
+            try {
+                // Calculate portfolio with new weights
+                fetch('/api/portfolio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ weights: allocationWeights })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    currentPortfolio = data;
+                    updatePortfolioInfo();
+                    plotEfficientFrontier();
+                    // alert('Portfolio updated based on asset allocation.');
+                })
+                .catch(error => {
+                    console.error('Error updating portfolio from allocation:', error);
+                    alert('Error updating portfolio. Please try again.');
+                });
+            } catch (error) {
+                console.error('Error preparing portfolio update:', error);
+                alert('Error preparing portfolio data. Please check your input values.');
+            }
         }
         
         // Function to reset allocation
@@ -716,230 +716,6 @@
             calculateEquityTotals();
             calculateFixedIncomeTotals();
             calculateGrandTotal();
-        }
-        
-        // Function to save allocation to CSV
-        function saveAllocationToCSV() {
-            // Get allocation data
-            const allocation = [];
-            
-            // Add equity data
-            document.querySelectorAll('.equity-cell').forEach(cell => {
-                const row = cell.dataset.row;
-                const col = cell.dataset.col;
-                const value = Number(cell.value) || 0;
-                
-                if (value > 0) {
-                    allocation.push({
-                        type: 'equity',
-                        size_term: row,
-                        style_risk: col,
-                        amount: value
-                    });
-                }
-            });
-            
-            // Add fixed income data
-            document.querySelectorAll('.fixed-income-cell').forEach(cell => {
-                const row = cell.dataset.row;
-                const col = cell.dataset.col;
-                const value = Number(cell.value) || 0;
-                
-                if (value > 0) {
-                    allocation.push({
-                        type: 'fixed',
-                        size_term: row,
-                        style_risk: col,
-                        amount: value
-                    });
-                }
-            });
-            
-            // Add cash data
-            document.querySelectorAll('.cash-cell').forEach(cell => {
-                const cashType = cell.dataset.type;
-                const value = Number(cell.value) || 0;
-                
-                if (value > 0) {
-                    allocation.push({
-                        type: 'cash',
-                        cash_type: cashType,
-                        amount: value
-                    });
-                }
-            });
-            
-            // If no allocation, show error
-            if (allocation.length === 0) {
-                alert('Please allocate some funds before saving.');
-                return;
-            }
-            
-            // Save using server API
-            fetch('/api/allocations/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ allocation })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`Allocation saved successfully as ${data.filename}`);
-                    // Optionally, update a list of saved allocations if we had one
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            })
-            .catch(error => {
-                console.error('Error saving allocation:', error);
-                alert('Error saving allocation. Please try again.');
-            });
-            
-            // Also offer local download as an alternative
-            const csvContent = "type,size_term,style_risk,amount\n" + 
-                allocation.map(item => `${item.type},${item.size_term},${item.style_risk},${item.amount}`).join('\n');
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'allocation.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        // Function to load allocation from CSV
-        function loadAllocationFromCSV(file) {
-            // If file is provided, load from file
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(event) {
-                    processCSVContent(event.target.result);
-                };
-                
-                reader.readAsText(file);
-            } else {
-                // If no file provided, show a list of server-saved allocations
-                fetch('/api/allocations/list')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.files.length > 0) {
-                        // For simplicity, just load the most recent one
-                        // In a real app, you'd show a selection UI
-                        const mostRecent = data.files[0];
-                        loadAllocationFromServer(mostRecent.filename);
-                    } else {
-                        alert('No saved allocations found on server.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error listing allocations:', error);
-                    alert('Error loading allocation list. Please try again.');
-                });
-            }
-        }
-        
-        // Function to load allocation from server
-        function loadAllocationFromServer(filename) {
-            fetch(`/api/allocations/load/${filename}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.allocation) {
-                    // Reset current allocation
-                    resetAllocation();
-                    
-                    // Process allocation data
-                    data.allocation.forEach(item => {
-                        const type = item.type;
-                        const sizeOrTerm = item.size_term;
-                        const styleOrRisk = item.style_risk;
-                        const amount = item.amount;
-                        
-                        if (type === 'equity') {
-                            const cell = document.querySelector(`.equity-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
-                            if (cell) {
-                                cell.value = amount;
-                            }
-                        } else if (type === 'fixed') {
-                            const cell = document.querySelector(`.fixed-income-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
-                            if (cell) {
-                                cell.value = amount;
-                            }
-                        } else if (type === 'cash') {
-                            const cell = document.querySelector(`.cash-cell[data-type="${styleOrRisk}"]`);
-                            if (cell) {
-                                cell.value = amount;
-                            }
-                        }
-                    });
-                    
-                    // Update totals
-                    calculateEquityTotals();
-                    calculateFixedIncomeTotals();
-                    calculateGrandTotal();
-                    
-                    // Update portfolio
-                    updateAllocation();
-                    
-                    alert(`Allocation loaded from ${filename}`);
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading allocation:', error);
-                alert('Error loading allocation. Please try again.');
-            });
-        }
-        
-        // Function to process CSV content
-        function processCSVContent(csvContent) {
-            // Reset current allocation
-            resetAllocation();
-            
-            // Parse CSV content
-            const lines = csvContent.split('\n');
-            
-            // Skip header row
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
-                const fields = line.split(',');
-                const type = fields[0];
-                
-                if (type === 'equity') {
-                    const [_, sizeOrTerm, styleOrRisk, amount] = fields;
-                    const cell = document.querySelector(`.equity-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
-                    if (cell) {
-                        cell.value = amount;
-                    }
-                } else if (type === 'fixed') {
-                    const [_, sizeOrTerm, styleOrRisk, amount] = fields;
-                    const cell = document.querySelector(`.fixed-income-cell[data-row="${sizeOrTerm}"][data-col="${styleOrRisk}"]`);
-                    if (cell) {
-                        cell.value = amount;
-                    }
-                } else if (type === 'cash') {
-                    const [_, cashType, __, amount] = fields; // Notes field may be present
-                    const cell = document.querySelector(`.cash-cell[data-type="${cashType}"]`);
-                    if (cell) {
-                        cell.value = amount;
-                    }
-                }
-            }
-            
-            // Update totals
-            calculateEquityTotals();
-            calculateFixedIncomeTotals();
-            calculateGrandTotal();
-            
-            // Update portfolio
-            updateAllocation();
         }
         
         // Event listeners
@@ -959,21 +735,6 @@
             
             // Reset allocation button (we've changed the handler above but we need to call this function)
             // document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
-            
-            // CSV save/load buttons
-            document.getElementById('save-csv-btn').addEventListener('click', saveAllocationToCSV);
-            
-            document.getElementById('load-csv-btn').addEventListener('click', () => {
-                const fileInput = document.getElementById('load-csv-input');
-                if (fileInput.files.length > 0) {
-                    loadAllocationFromCSV(fileInput.files[0]);
-                } else {
-                    // Ask if the user wants to load from server
-                    if (confirm('No file selected. Would you like to load a previously saved allocation from server?')) {
-                        loadAllocationFromCSV(null); // null will trigger server loading
-                    }
-                }
-            });
             
             // Load available periods
             loadAvailablePeriods();
@@ -1077,57 +838,63 @@
                             cell.value = 0;
                         });
                         
-                        // Update equity cells
-                        for (const [key, value] of Object.entries(allocation.equity)) {
-                            const [row, col] = key.split('_');
-                            const cell = document.querySelector(`.equity-cell[data-row="${row}"][data-col="${col}"]`);
-                            if (cell) {
-                                cell.value = value;
+                        try {
+                            // Update equity cells
+                            for (const [key, value] of Object.entries(allocation.equity || {})) {
+                                const [row, col] = key.split('_');
+                                const cell = document.querySelector(`.equity-cell[data-row="${row}"][data-col="${col}"]`);
+                                if (cell) {
+                                    cell.value = parseFloat(value) || 0;
+                                }
                             }
-                        }
-                        
-                        // Update fixed income cells
-                        for (const [key, value] of Object.entries(allocation.fixed_income)) {
-                            const [row, col] = key.split('_');
-                            const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
-                            if (cell) {
-                                cell.value = value;
-                            }
-                        }
-                        
-                        // Update cash cells
-                        for (const [key, value] of Object.entries(allocation.cash)) {
-                            const cell = document.querySelector(`.cash-cell[data-type="${key}"]`);
-                            if (cell) {
-                                cell.value = value;
-                            }
-                        }
-                        
-                        // Recalculate totals
-                        calculateEquityTotals();
-                        calculateFixedIncomeTotals();
-                        calculateGrandTotal();
-                        
-                        // Update portfolio based on allocation
-                        updateAllocation();
-                        
-                        // Update period indicator if period info is available
-                        if (data.period) {
-                            const periodIndicator = document.getElementById('current-period-info');
-                            const periodText = document.getElementById('current-period-text');
-                            periodText.textContent = `${data.period.year} Q${data.period.quarter}`;
-                            periodIndicator.style.display = 'block';
                             
-                            // If period was returned from API, save it to localStorage
-                            localStorage.setItem('investGenie_selectedYear', data.period.year);
-                            localStorage.setItem('investGenie_selectedQuarter', data.period.quarter);
-                        } else {
-                            document.getElementById('current-period-info').style.display = 'none';
+                            // Update fixed income cells
+                            for (const [key, value] of Object.entries(allocation.fixed_income || {})) {
+                                const [row, col] = key.split('_');
+                                const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
+                                if (cell) {
+                                    cell.value = parseFloat(value) || 0;
+                                }
+                            }
+                            
+                            // Update cash cells
+                            for (const [key, value] of Object.entries(allocation.cash || {})) {
+                                const cell = document.querySelector(`.cash-cell[data-type="${key}"]`);
+                                if (cell) {
+                                    cell.value = parseFloat(value) || 0;
+                                }
+                            }
+                            
+                            // Recalculate totals
+                            calculateEquityTotals();
+                            calculateFixedIncomeTotals();
+                            calculateGrandTotal();
+                            
+                            // Update portfolio based on allocation
+                            updateAllocation();
+                            
+                            // Update period indicator if period info is available
+                            if (data.period) {
+                                const periodIndicator = document.getElementById('current-period-info');
+                                const periodText = document.getElementById('current-period-text');
+                                periodText.textContent = `${data.period.year} Q${data.period.quarter}`;
+                                periodIndicator.style.display = 'block';
+                                
+                                // If period was returned from API, save it to localStorage
+                                localStorage.setItem('investGenie_selectedYear', data.period.year);
+                                localStorage.setItem('investGenie_selectedQuarter', data.period.quarter);
+                            } else {
+                                document.getElementById('current-period-info').style.display = 'none';
+                            }
+                        } catch (error) {
+                            console.error('Error processing allocation data:', error);
+                            alert('Error processing allocation data. Please try again.');
                         }
                     }
                 })
                 .catch(error => {
                     console.error('Error loading aggregated allocations:', error);
+                    alert('Error loading allocation data. Please try again.');
                 });
         }
     </script>
