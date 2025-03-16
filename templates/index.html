@@ -22,8 +22,9 @@
             margin-bottom: 10px;
         }
         .portfolio-input label {
-            width: 100px;
+            width: 180px;
             margin-right: 10px;
+            font-size: 0.85rem;
         }
         .loading {
             display: none;
@@ -38,6 +39,37 @@
         }
         .optimize-btn {
             margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .asset-section {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .asset-section h5 {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #495057;
+        }
+        .asset-group-weight {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        #equity-weight, #fixed-income-weight {
+            font-weight: bold;
+        }
+        .asset-type-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tab-content {
+            padding-top: 15px;
         }
     </style>
 </head>
@@ -61,31 +93,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Portfolio Settings</h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="portfolio-form">
-                            <div id="portfolio-weights">
-                                <!-- Asset weights will be added here dynamically -->
-                            </div>
-                            
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-primary" id="calculate-btn">Calculate Portfolio</button>
-                                <button type="button" class="btn btn-warning" id="reset-btn">Reset Weights</button>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-success optimize-btn" id="max-sharpe-btn">Max Sharpe Ratio</button>
-                                <button type="button" class="btn btn-info optimize-btn" id="min-vol-btn">Min Volatility</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
                 
                 <div class="card">
                     <div class="card-header">
@@ -98,14 +105,111 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Asset Allocation</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4>Asset Class Weights</h4>
+                                </div>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div id="equity-progress" class="progress-bar bg-primary" role="progressbar" style="width: 60%;">
+                                        <span id="equity-weight">60%</span>
+                                    </div>
+                                    <div id="fixed-income-progress" class="progress-bar bg-success" role="progressbar" style="width: 40%;">
+                                        <span id="fixed-income-weight">40%</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span><span class="badge bg-primary">&nbsp;</span> Equity</span>
+                                    <span><span class="badge bg-success">&nbsp;</span> Fixed Income</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <ul class="nav nav-tabs" id="assetTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="equity-tab" data-bs-toggle="tab" data-bs-target="#equity" type="button" role="tab" aria-controls="equity" aria-selected="true">Equity Funds</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="fixed-tab" data-bs-toggle="tab" data-bs-target="#fixed" type="button" role="tab" aria-controls="fixed" aria-selected="false">Fixed Income</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="assetTabsContent">
+                            <!-- Equity Tab -->
+                            <div class="tab-pane fade show active" id="equity" role="tabpanel" aria-labelledby="equity-tab">
+                                <div class="asset-type-header">
+                                    <h5 class="mb-0">Equity Allocations</h5>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="reset-equity-btn">Reset</button>
+                                </div>
+                                <div id="equity-weights">
+                                    <!-- Equity asset weights will be added here dynamically -->
+                                </div>
+                            </div>
+                            
+                            <!-- Fixed Income Tab -->
+                            <div class="tab-pane fade" id="fixed" role="tabpanel" aria-labelledby="fixed-tab">
+                                <div class="asset-type-header">
+                                    <h5 class="mb-0">Fixed Income Allocations</h5>
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="reset-fixed-btn">Reset</button>
+                                </div>
+                                <div id="fixed-income-weights">
+                                    <!-- Fixed income asset weights will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-primary" id="calculate-btn">Calculate Portfolio</button>
+                            <button type="button" class="btn btn-warning" id="reset-all-btn">Reset All</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Portfolio Optimization</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h5>Predefined Portfolios</h5>
+                                <button type="button" class="btn btn-success optimize-btn" id="max-sharpe-btn">Max Sharpe Ratio</button>
+                                <button type="button" class="btn btn-info optimize-btn" id="min-vol-btn">Min Volatility</button>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h5>Risk Profile Portfolios</h5>
+                                <button type="button" class="btn btn-outline-danger optimize-btn" id="aggressive-btn">Aggressive (80/20)</button>
+                                <button type="button" class="btn btn-outline-warning optimize-btn" id="balanced-btn">Balanced (60/40)</button>
+                                <button type="button" class="btn btn-outline-primary optimize-btn" id="conservative-btn">Conservative (30/70)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         // Store data globally
         let efficientFrontierData = null;
         let currentPortfolio = null;
-        let assets = [];
+        let allAssets = [];
+        let equityAssets = [];
+        let fixedIncomeAssets = [];
+        let assetDisplayNames = {};
         
         // Function to fetch efficient frontier data
         async function fetchEfficientFrontier() {
@@ -114,7 +218,12 @@
             try {
                 const response = await fetch('/api/efficient-frontier');
                 efficientFrontierData = await response.json();
-                assets = efficientFrontierData.assets;
+                
+                // Store asset information
+                allAssets = efficientFrontierData.assets;
+                equityAssets = efficientFrontierData.equity_assets || [];
+                fixedIncomeAssets = efficientFrontierData.fixed_income_assets || [];
+                assetDisplayNames = efficientFrontierData.asset_names || {};
                 
                 // Initialize portfolio weights form
                 initializePortfolioForm();
@@ -131,51 +240,84 @@
         
         // Function to initialize portfolio weights form
         function initializePortfolioForm() {
-            const weightsContainer = document.getElementById('portfolio-weights');
-            weightsContainer.innerHTML = '';
+            const equityContainer = document.getElementById('equity-weights');
+            const fixedIncomeContainer = document.getElementById('fixed-income-weights');
             
-            // Create equal weights
-            const equalWeight = 1.0 / assets.length;
+            equityContainer.innerHTML = '';
+            fixedIncomeContainer.innerHTML = '';
             
-            // Create input for each asset
-            assets.forEach(asset => {
-                const div = document.createElement('div');
-                div.className = 'portfolio-input';
-                
-                const label = document.createElement('label');
-                label.textContent = asset;
-                label.htmlFor = `weight-${asset}`;
-                
-                const input = document.createElement('input');
-                input.type = 'range';
-                input.className = 'form-range';
-                input.id = `weight-${asset}`;
-                input.min = '0';
-                input.max = '1';
-                input.step = '0.01';
-                input.value = equalWeight.toFixed(2);
-                
-                const valueDisplay = document.createElement('span');
-                valueDisplay.className = 'ms-2';
-                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
-                
-                input.addEventListener('input', () => {
-                    valueDisplay.textContent = `${(input.value * 100).toFixed(0)}%`;
-                    normalizeWeights(input.id);
-                });
-                
-                div.appendChild(label);
-                div.appendChild(input);
-                div.appendChild(valueDisplay);
-                
-                weightsContainer.appendChild(div);
+            // Calculate default weights: equal weight within each asset class
+            const equityWeight = 0.6; // 60% in equity
+            const fixedIncomeWeight = 0.4; // 40% in fixed income
+            
+            const equalEquityWeight = equityAssets.length > 0 ? equityWeight / equityAssets.length : 0;
+            const equalFixedIncomeWeight = fixedIncomeAssets.length > 0 ? fixedIncomeWeight / fixedIncomeAssets.length : 0;
+            
+            // Create equity inputs
+            equityAssets.forEach(asset => {
+                createAssetInput(asset, equalEquityWeight, 'equity');
             });
+            
+            // Create fixed income inputs
+            fixedIncomeAssets.forEach(asset => {
+                createAssetInput(asset, equalFixedIncomeWeight, 'fixed_income');
+            });
+            
+            // Update asset class weight indicators
+            updateAssetClassWeights();
         }
         
-        // Function to normalize weights to sum to 1
-        function normalizeWeights(changedInputId) {
-            // Get all weight inputs
-            const inputs = Array.from(document.querySelectorAll('#portfolio-weights input[type="range"]'));
+        // Function to create input for an asset
+        function createAssetInput(asset, weight, assetType) {
+            const container = assetType === 'equity' ? 
+                document.getElementById('equity-weights') : 
+                document.getElementById('fixed-income-weights');
+            
+            const displayName = assetDisplayNames[asset] || asset;
+            
+            const div = document.createElement('div');
+            div.className = 'portfolio-input';
+            
+            const label = document.createElement('label');
+            label.textContent = displayName;
+            label.htmlFor = `weight-${asset}`;
+            label.title = displayName;
+            
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.className = 'form-range';
+            input.id = `weight-${asset}`;
+            input.dataset.assetType = assetType;
+            input.min = '0';
+            input.max = '1';
+            input.step = '0.01';
+            input.value = weight.toFixed(2);
+            
+            const valueDisplay = document.createElement('span');
+            valueDisplay.className = 'ms-2';
+            valueDisplay.textContent = `${(weight * 100).toFixed(0)}%`;
+            
+            input.addEventListener('input', () => {
+                valueDisplay.textContent = `${(input.value * 100).toFixed(0)}%`;
+                normalizeWeightsWithinGroup(input.id, assetType);
+                updateAssetClassWeights();
+            });
+            
+            div.appendChild(label);
+            div.appendChild(input);
+            div.appendChild(valueDisplay);
+            
+            container.appendChild(div);
+        }
+        
+        // Function to normalize weights within an asset group
+        function normalizeWeightsWithinGroup(changedInputId, assetType) {
+            // Get all inputs for this asset type
+            const assetSelector = `#${assetType === 'equity' ? 'equity-weights' : 'fixed-income-weights'} input[type="range"]`;
+            const inputs = Array.from(document.querySelectorAll(assetSelector));
+            
+            // If we have no inputs, exit
+            if (inputs.length === 0) return;
             
             // Calculate total weight excluding the changed input
             const changedInput = document.getElementById(changedInputId);
@@ -184,7 +326,10 @@
             const otherInputs = inputs.filter(input => input.id !== changedInputId);
             const otherSum = otherInputs.reduce((sum, input) => sum + parseFloat(input.value), 0);
             
-            // If sum of all weights exceeds 1, adjust other weights proportionally
+            // Get the current total allocated to this asset type
+            const assetTypeTotal = getCurrentAssetTypeWeight(assetType);
+            
+            // If the new total exceeds 1, adjust other assets
             if (changedValue + otherSum > 1) {
                 // If other sum is zero, we can't normalize proportionally
                 if (otherSum === 0) {
@@ -196,7 +341,7 @@
                     return;
                 }
                 
-                // Calculate scale factor
+                // Calculate scale factor to maintain the total
                 const scaleFactor = (1 - changedValue) / otherSum;
                 
                 // Adjust other weights
@@ -211,13 +356,49 @@
             }
         }
         
-        // Function to get current portfolio weights
-        function getCurrentWeights() {
-            const weights = {};
+        // Get current weight allocated to an asset type
+        function getCurrentAssetTypeWeight(assetType) {
+            const assets = assetType === 'equity' ? equityAssets : fixedIncomeAssets;
+            let total = 0;
             
             assets.forEach(asset => {
                 const input = document.getElementById(`weight-${asset}`);
-                weights[asset] = parseFloat(input.value);
+                if (input) {
+                    total += parseFloat(input.value);
+                }
+            });
+            
+            return total;
+        }
+        
+        // Update the asset class weight indicators
+        function updateAssetClassWeights() {
+            const equityTotal = getCurrentAssetTypeWeight('equity');
+            const fixedIncomeTotal = getCurrentAssetTypeWeight('fixed_income');
+            const total = equityTotal + fixedIncomeTotal;
+            
+            // Calculate percentages
+            const equityPercent = total > 0 ? (equityTotal / total) * 100 : 0;
+            const fixedIncomePercent = total > 0 ? (fixedIncomeTotal / total) * 100 : 0;
+            
+            // Update progress bars
+            document.getElementById('equity-progress').style.width = `${equityPercent}%`;
+            document.getElementById('fixed-income-progress').style.width = `${fixedIncomePercent}%`;
+            
+            // Update text
+            document.getElementById('equity-weight').textContent = `${equityPercent.toFixed(0)}%`;
+            document.getElementById('fixed-income-weight').textContent = `${fixedIncomePercent.toFixed(0)}%`;
+        }
+        
+        // Function to get current portfolio weights for all assets
+        function getCurrentWeights() {
+            const weights = {};
+            
+            [...equityAssets, ...fixedIncomeAssets].forEach(asset => {
+                const input = document.getElementById(`weight-${asset}`);
+                if (input) {
+                    weights[asset] = parseFloat(input.value);
+                }
             });
             
             return weights;
@@ -259,9 +440,41 @@
             const volatility = (currentPortfolio.volatility * 100).toFixed(2);
             const sharpe_ratio = currentPortfolio.sharpe_ratio.toFixed(2);
             
-            let weightsList = '';
-            for (const [asset, weight] of Object.entries(currentPortfolio.weights)) {
-                weightsList += `<li>${asset}: ${(weight * 100).toFixed(2)}%</li>`;
+            // Get asset type weights
+            const equityWeight = currentPortfolio.asset_type_weights?.equity || 0;
+            const fixedIncomeWeight = currentPortfolio.asset_type_weights?.fixed_income || 0;
+            
+            // Prepare asset weights HTML
+            let equityWeightsList = '';
+            let fixedIncomeWeightsList = '';
+            
+            for (const asset in currentPortfolio.weights) {
+                const weight = currentPortfolio.weights[asset];
+                const displayName = assetDisplayNames[asset] || asset;
+                
+                // If weights are objects with type
+                if (typeof weight === 'object' && weight.type) {
+                    const weightValue = weight.weight;
+                    const weightPercent = (weightValue * 100).toFixed(2);
+                    
+                    if (weight.type === 'equity') {
+                        equityWeightsList += `<li>${displayName}: ${weightPercent}%</li>`;
+                    } else if (weight.type === 'fixed_income') {
+                        fixedIncomeWeightsList += `<li>${displayName}: ${weightPercent}%</li>`;
+                    }
+                } 
+                // If weights are simple numbers
+                else {
+                    const weightValue = typeof weight === 'number' ? weight : 0;
+                    const weightPercent = (weightValue * 100).toFixed(2);
+                    
+                    // Determine type based on asset lists
+                    if (equityAssets.includes(asset)) {
+                        equityWeightsList += `<li>${displayName}: ${weightPercent}%</li>`;
+                    } else if (fixedIncomeAssets.includes(asset)) {
+                        fixedIncomeWeightsList += `<li>${displayName}: ${weightPercent}%</li>`;
+                    }
+                }
             }
             
             infoContainer.innerHTML = `
@@ -272,28 +485,40 @@
                     <li>Sharpe Ratio: ${sharpe_ratio}</li>
                 </ul>
                 
-                <h4>Asset Weights</h4>
-                <ul>${weightsList}</ul>
+                <h4>Asset Class Allocation</h4>
+                <ul>
+                    <li>Equity: ${(equityWeight * 100).toFixed(2)}%</li>
+                    <li>Fixed Income: ${(fixedIncomeWeight * 100).toFixed(2)}%</li>
+                </ul>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Equity Allocation</h5>
+                        <ul>${equityWeightsList || '<li>None</li>'}</ul>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5>Fixed Income Allocation</h5>
+                        <ul>${fixedIncomeWeightsList || '<li>None</li>'}</ul>
+                    </div>
+                </div>
             `;
         }
         
         // Function to optimize portfolio
-        async function optimizePortfolio(type) {
+        async function optimizePortfolio(type, constraints = {}) {
             try {
-                const response = await fetch(`/api/optimize?type=${type}`);
+                // Build query string
+                let queryParams = `type=${type}`;
+                for (const [key, value] of Object.entries(constraints)) {
+                    queryParams += `&${key}=${value}`;
+                }
+                
+                const response = await fetch(`/api/optimize?${queryParams}`);
                 const data = await response.json();
                 
                 // Update portfolio weights in form
-                for (const [asset, weight] of Object.entries(data.metrics.weights)) {
-                    const input = document.getElementById(`weight-${asset}`);
-                    if (input) {
-                        input.value = weight.toFixed(2);
-                        
-                        // Update value display
-                        const valueDisplay = input.nextElementSibling;
-                        valueDisplay.textContent = `${(weight * 100).toFixed(0)}%`;
-                    }
-                }
+                updateFormFromWeights(data.metrics.weights);
                 
                 // Calculate portfolio with new weights
                 await calculatePortfolio();
@@ -303,20 +528,77 @@
             }
         }
         
-        // Function to reset weights
-        function resetWeights() {
-            const equalWeight = 1.0 / assets.length;
+        // Function to update form values from weights
+        function updateFormFromWeights(weights) {
+            for (const asset in weights) {
+                const input = document.getElementById(`weight-${asset}`);
+                if (input) {
+                    // Handle weights as objects with type
+                    const weightValue = typeof weights[asset] === 'object' ? 
+                        weights[asset].weight : weights[asset];
+                    
+                    input.value = weightValue.toFixed(2);
+                    
+                    // Update value display
+                    const valueDisplay = input.nextElementSibling;
+                    valueDisplay.textContent = `${(weightValue * 100).toFixed(0)}%`;
+                }
+            }
             
+            // Update asset class weights
+            updateAssetClassWeights();
+        }
+        
+        // Function to reset weights for a specific asset type
+        function resetAssetTypeWeights(assetType, targetRatio = null) {
+            const assets = assetType === 'equity' ? equityAssets : fixedIncomeAssets;
+            
+            // If no ratio specified, use current balance
+            if (targetRatio === null) {
+                const currentEquityTotal = getCurrentAssetTypeWeight('equity');
+                const currentFixedTotal = getCurrentAssetTypeWeight('fixed_income');
+                const currentTotal = currentEquityTotal + currentFixedTotal;
+                
+                if (currentTotal > 0) {
+                    targetRatio = assetType === 'equity' ? 
+                        currentEquityTotal / currentTotal : 
+                        currentFixedTotal / currentTotal;
+                } else {
+                    // Default ratios if no existing allocation
+                    targetRatio = assetType === 'equity' ? 0.6 : 0.4;
+                }
+            }
+            
+            // Calculate equal weight for each asset in this type
+            const equalWeight = assets.length > 0 ? targetRatio / assets.length : 0;
+            
+            // Set each asset to the equal weight
             assets.forEach(asset => {
                 const input = document.getElementById(`weight-${asset}`);
-                input.value = equalWeight.toFixed(2);
-                
-                // Update value display
-                const valueDisplay = input.nextElementSibling;
-                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
+                if (input) {
+                    input.value = equalWeight.toFixed(2);
+                    
+                    // Update value display
+                    const valueDisplay = input.nextElementSibling;
+                    valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
+                }
             });
             
-            // Calculate portfolio with new weights
+            // Update asset class weights
+            updateAssetClassWeights();
+        }
+        
+        // Function to reset all weights
+        function resetAllWeights() {
+            resetAssetTypeWeights('equity', 0.6);  // 60% equity
+            resetAssetTypeWeights('fixed_income', 0.4);  // 40% fixed income
+            calculatePortfolio();
+        }
+        
+        // Apply predefined asset allocation
+        function applyPredefinedAllocation(equityRatio, fixedIncomeRatio) {
+            resetAssetTypeWeights('equity', equityRatio);
+            resetAssetTypeWeights('fixed_income', fixedIncomeRatio);
             calculatePortfolio();
         }
         
@@ -428,12 +710,19 @@
             // Calculate button
             document.getElementById('calculate-btn').addEventListener('click', calculatePortfolio);
             
-            // Reset button
-            document.getElementById('reset-btn').addEventListener('click', resetWeights);
+            // Reset buttons
+            document.getElementById('reset-all-btn').addEventListener('click', resetAllWeights);
+            document.getElementById('reset-equity-btn').addEventListener('click', () => resetAssetTypeWeights('equity'));
+            document.getElementById('reset-fixed-btn').addEventListener('click', () => resetAssetTypeWeights('fixed_income'));
             
             // Optimize buttons
             document.getElementById('max-sharpe-btn').addEventListener('click', () => optimizePortfolio('max_sharpe'));
             document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
+            
+            // Predefined allocation buttons
+            document.getElementById('aggressive-btn').addEventListener('click', () => applyPredefinedAllocation(0.8, 0.2));
+            document.getElementById('balanced-btn').addEventListener('click', () => applyPredefinedAllocation(0.6, 0.4));
+            document.getElementById('conservative-btn').addEventListener('click', () => applyPredefinedAllocation(0.3, 0.7));
         });
     </script>
 </body>
