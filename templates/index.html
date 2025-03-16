@@ -97,6 +97,120 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Asset Allocation Grid -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Asset Allocation</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h4>Equity Allocation ($)</h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="equity-allocation-grid">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Growth</th>
+                                            <th>Blend</th>
+                                            <th>Value</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>Small Cap</th>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="growth"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="blend"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="small" data-col="value"></td>
+                                            <td class="text-end fw-bold" id="equity-small-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Mid Cap</th>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="growth"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="blend"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="mid" data-col="value"></td>
+                                            <td class="text-end fw-bold" id="equity-mid-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Large Cap</th>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="growth"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="blend"></td>
+                                            <td><input type="number" min="0" class="form-control equity-cell" data-row="large" data-col="value"></td>
+                                            <td class="text-end fw-bold" id="equity-large-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total</th>
+                                            <td class="text-end fw-bold" id="equity-growth-total">$0</td>
+                                            <td class="text-end fw-bold" id="equity-blend-total">$0</td>
+                                            <td class="text-end fw-bold" id="equity-value-total">$0</td>
+                                            <td class="text-end fw-bold" id="equity-grand-total">$0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h4>Fixed Income Allocation ($)</h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="fixed-income-allocation-grid">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Low Risk</th>
+                                            <th>Mid Risk</th>
+                                            <th>High Risk</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>Short Term</th>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="low"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="mid"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="short" data-col="high"></td>
+                                            <td class="text-end fw-bold" id="fixed-short-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Mid Term</th>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="low"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="mid"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="mid" data-col="high"></td>
+                                            <td class="text-end fw-bold" id="fixed-mid-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Long Term</th>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="low"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="mid"></td>
+                                            <td><input type="number" min="0" class="form-control fixed-income-cell" data-row="long" data-col="high"></td>
+                                            <td class="text-end fw-bold" id="fixed-long-total">$0</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total</th>
+                                            <td class="text-end fw-bold" id="fixed-low-total">$0</td>
+                                            <td class="text-end fw-bold" id="fixed-mid-total">$0</td>
+                                            <td class="text-end fw-bold" id="fixed-high-total">$0</td>
+                                            <td class="text-end fw-bold" id="fixed-grand-total">$0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h4>Total Allocation</h4>
+                            <p>Equity: <span id="total-equity" class="fw-bold">$0</span></p>
+                            <p>Fixed Income: <span id="total-fixed-income" class="fw-bold">$0</span></p>
+                            <p>Grand Total: <span id="allocation-grand-total" class="fw-bold">$0</span></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" id="update-allocation-btn">Update Allocation</button>
+                            <button type="button" class="btn btn-warning" id="reset-allocation-btn">Reset Allocation</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -434,7 +548,208 @@
             // Optimize buttons
             document.getElementById('max-sharpe-btn').addEventListener('click', () => optimizePortfolio('max_sharpe'));
             document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
+            
+            // Allocation grid functionality
+            initializeAllocationGrids();
+            
+            // Allocation grid buttons
+            document.getElementById('update-allocation-btn').addEventListener('click', updateAllocation);
+            document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
         });
+        
+        // Function to initialize allocation grids
+        function initializeAllocationGrids() {
+            // Add event listeners to equity grid cells
+            document.querySelectorAll('.equity-cell').forEach(input => {
+                input.value = 0; // Initialize with zero
+                input.addEventListener('input', () => {
+                    calculateEquityTotals();
+                    calculateGrandTotal();
+                });
+            });
+            
+            // Add event listeners to fixed income grid cells
+            document.querySelectorAll('.fixed-income-cell').forEach(input => {
+                input.value = 0; // Initialize with zero
+                input.addEventListener('input', () => {
+                    calculateFixedIncomeTotals();
+                    calculateGrandTotal();
+                });
+            });
+            
+            // Initialize totals
+            calculateEquityTotals();
+            calculateFixedIncomeTotals();
+            calculateGrandTotal();
+        }
+        
+        // Function to calculate equity grid totals
+        function calculateEquityTotals() {
+            // Row totals
+            const rows = ['small', 'mid', 'large'];
+            const cols = ['growth', 'blend', 'value'];
+            
+            // Calculate row totals
+            rows.forEach(row => {
+                let rowTotal = 0;
+                cols.forEach(col => {
+                    const cell = document.querySelector(`.equity-cell[data-row="${row}"][data-col="${col}"]`);
+                    rowTotal += Number(cell.value) || 0;
+                });
+                document.getElementById(`equity-${row}-total`).textContent = formatCurrency(rowTotal);
+            });
+            
+            // Calculate column totals
+            cols.forEach(col => {
+                let colTotal = 0;
+                rows.forEach(row => {
+                    const cell = document.querySelector(`.equity-cell[data-row="${row}"][data-col="${col}"]`);
+                    colTotal += Number(cell.value) || 0;
+                });
+                document.getElementById(`equity-${col}-total`).textContent = formatCurrency(colTotal);
+            });
+            
+            // Calculate grand total
+            let grandTotal = 0;
+            document.querySelectorAll('.equity-cell').forEach(cell => {
+                grandTotal += Number(cell.value) || 0;
+            });
+            document.getElementById('equity-grand-total').textContent = formatCurrency(grandTotal);
+            document.getElementById('total-equity').textContent = formatCurrency(grandTotal);
+        }
+        
+        // Function to calculate fixed income grid totals
+        function calculateFixedIncomeTotals() {
+            // Row totals
+            const rows = ['short', 'mid', 'long'];
+            const cols = ['low', 'mid', 'high'];
+            
+            // Calculate row totals
+            rows.forEach(row => {
+                let rowTotal = 0;
+                cols.forEach(col => {
+                    const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
+                    rowTotal += Number(cell.value) || 0;
+                });
+                document.getElementById(`fixed-${row}-total`).textContent = formatCurrency(rowTotal);
+            });
+            
+            // Calculate column totals
+            cols.forEach(col => {
+                let colTotal = 0;
+                rows.forEach(row => {
+                    const cell = document.querySelector(`.fixed-income-cell[data-row="${row}"][data-col="${col}"]`);
+                    colTotal += Number(cell.value) || 0;
+                });
+                document.getElementById(`fixed-${col}-total`).textContent = formatCurrency(colTotal);
+            });
+            
+            // Calculate grand total
+            let grandTotal = 0;
+            document.querySelectorAll('.fixed-income-cell').forEach(cell => {
+                grandTotal += Number(cell.value) || 0;
+            });
+            document.getElementById('fixed-grand-total').textContent = formatCurrency(grandTotal);
+            document.getElementById('total-fixed-income').textContent = formatCurrency(grandTotal);
+        }
+        
+        // Function to calculate grand total
+        function calculateGrandTotal() {
+            const equityTotal = document.querySelectorAll('.equity-cell').length > 0 ? 
+                Array.from(document.querySelectorAll('.equity-cell')).reduce((sum, cell) => sum + (Number(cell.value) || 0), 0) : 0;
+                
+            const fixedIncomeTotal = document.querySelectorAll('.fixed-income-cell').length > 0 ? 
+                Array.from(document.querySelectorAll('.fixed-income-cell')).reduce((sum, cell) => sum + (Number(cell.value) || 0), 0) : 0;
+                
+            const grandTotal = equityTotal + fixedIncomeTotal;
+            document.getElementById('allocation-grand-total').textContent = formatCurrency(grandTotal);
+        }
+        
+        // Function to format currency
+        function formatCurrency(value) {
+            return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+        
+        // Function to convert allocation grid to portfolio weights
+        function getAllocationWeights() {
+            // Get total allocation
+            const totalAllocation = parseFloat(document.getElementById('allocation-grand-total').textContent.replace('$', '').replace(/,/g, '')) || 0;
+            
+            if (totalAllocation === 0) {
+                alert('Please allocate some funds before updating the portfolio.');
+                return null;
+            }
+            
+            // Create weights object
+            const weights = {};
+            
+            // Process equity allocation
+            const equityGrid = {};
+            document.querySelectorAll('.equity-cell').forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    const assetKey = `equity_${row}_${col}`;
+                    weights[assetKey] = value / totalAllocation;
+                }
+            });
+            
+            // Process fixed income allocation
+            document.querySelectorAll('.fixed-income-cell').forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                const value = Number(cell.value) || 0;
+                
+                if (value > 0) {
+                    const assetKey = `fixed_${row}_${col}`;
+                    weights[assetKey] = value / totalAllocation;
+                }
+            });
+            
+            return weights;
+        }
+        
+        // Function to update portfolio based on allocation
+        function updateAllocation() {
+            const allocationWeights = getAllocationWeights();
+            
+            if (!allocationWeights) return;
+            
+            // Calculate portfolio with new weights
+            fetch('/api/portfolio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ weights: allocationWeights })
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentPortfolio = data;
+                updatePortfolioInfo();
+                plotEfficientFrontier();
+                alert('Portfolio updated based on asset allocation.');
+            })
+            .catch(error => {
+                console.error('Error updating portfolio from allocation:', error);
+                alert('Error updating portfolio. Please try again.');
+            });
+        }
+        
+        // Function to reset allocation
+        function resetAllocation() {
+            // Reset all input fields to zero
+            document.querySelectorAll('.equity-cell, .fixed-income-cell').forEach(cell => {
+                cell.value = 0;
+            });
+            
+            // Recalculate totals
+            calculateEquityTotals();
+            calculateFixedIncomeTotals();
+            calculateGrandTotal();
+        }
     </script>
 </body>
 </html> 

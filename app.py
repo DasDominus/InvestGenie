@@ -31,10 +31,31 @@ def calculate_portfolio():
     
     # Convert dict to proper format if needed
     if isinstance(weights, dict):
-        # Convert {asset: weight} to ordered list matching the assets in stock_handler
-        weight_list = [weights.get(asset, 0) for asset in stock_handler.get_assets()]
+        # Check if this is the new grid-based allocation format
+        is_grid_allocation = any(key.startswith(('equity_', 'fixed_')) for key in weights.keys())
+        
+        if is_grid_allocation:
+            # For grid allocation, we use the weights directly
+            # But we need to ensure all known assets have a weight
+            weight_dict = {asset: 0.0 for asset in stock_handler.get_assets()}
+            
+            # Update with provided weights (may include assets not in stock_handler)
+            # We'll keep only the known assets
+            for asset, weight in weights.items():
+                if asset in stock_handler.get_assets():
+                    weight_dict[asset] = weight
+            
+            # Convert to ordered list matching assets in stock_handler
+            weight_list = [weight_dict.get(asset, 0) for asset in stock_handler.get_assets()]
+            
+        else:
+            # Standard format - convert {asset: weight} to ordered list matching the assets in stock_handler
+            weight_list = [weights.get(asset, 0) for asset in stock_handler.get_assets()]
+        
         # Normalize weights
-        weight_list = np.array(weight_list) / sum(weight_list) if sum(weight_list) > 0 else weight_list
+        weight_sum = sum(weight_list)
+        if weight_sum > 0:
+            weight_list = np.array(weight_list) / weight_sum
         weights = weight_list.tolist()
     
     portfolio_data = ef_calculator.calculate_portfolio_metrics(weights)
