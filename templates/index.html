@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Efficient Frontier Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .portfolio-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .portfolio-input label {
+            width: 100px;
+            margin-right: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #efficient-frontier-plot {
+            height: 500px;
+        }
+        #current-portfolio-info {
+            margin-top: 20px;
+        }
+        .optimize-btn {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">Portfolio Efficient Frontier Analysis</h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Efficient Frontier</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="efficient-frontier-plot"></div>
+                        <div class="loading" id="plot-loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Calculating efficient frontier...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Portfolio Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="portfolio-form">
+                            <div id="portfolio-weights">
+                                <!-- Asset weights will be added here dynamically -->
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" id="calculate-btn">Calculate Portfolio</button>
+                                <button type="button" class="btn btn-warning" id="reset-btn">Reset Weights</button>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success optimize-btn" id="max-sharpe-btn">Max Sharpe Ratio</button>
+                                <button type="button" class="btn btn-info optimize-btn" id="min-vol-btn">Min Volatility</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Portfolio Metrics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="current-portfolio-info">
+                            <p>No portfolio calculated yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Store data globally
+        let efficientFrontierData = null;
+        let currentPortfolio = null;
+        let assets = [];
+        
+        // Function to fetch efficient frontier data
+        async function fetchEfficientFrontier() {
+            document.getElementById('plot-loading').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/efficient-frontier');
+                efficientFrontierData = await response.json();
+                assets = efficientFrontierData.assets;
+                
+                // Initialize portfolio weights form
+                initializePortfolioForm();
+                
+                // Plot efficient frontier
+                plotEfficientFrontier();
+            } catch (error) {
+                console.error('Error fetching efficient frontier:', error);
+                alert('Error fetching efficient frontier data. Please try again.');
+            } finally {
+                document.getElementById('plot-loading').style.display = 'none';
+            }
+        }
+        
+        // Function to initialize portfolio weights form
+        function initializePortfolioForm() {
+            const weightsContainer = document.getElementById('portfolio-weights');
+            weightsContainer.innerHTML = '';
+            
+            // Create equal weights
+            const equalWeight = 1.0 / assets.length;
+            
+            // Create input for each asset
+            assets.forEach(asset => {
+                const div = document.createElement('div');
+                div.className = 'portfolio-input';
+                
+                const label = document.createElement('label');
+                label.textContent = asset;
+                label.htmlFor = `weight-${asset}`;
+                
+                const input = document.createElement('input');
+                input.type = 'range';
+                input.className = 'form-range';
+                input.id = `weight-${asset}`;
+                input.min = '0';
+                input.max = '1';
+                input.step = '0.01';
+                input.value = equalWeight.toFixed(2);
+                
+                const valueDisplay = document.createElement('span');
+                valueDisplay.className = 'ms-2';
+                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
+                
+                input.addEventListener('input', () => {
+                    valueDisplay.textContent = `${(input.value * 100).toFixed(0)}%`;
+                    normalizeWeights(input.id);
+                });
+                
+                div.appendChild(label);
+                div.appendChild(input);
+                div.appendChild(valueDisplay);
+                
+                weightsContainer.appendChild(div);
+            });
+        }
+        
+        // Function to normalize weights to sum to 1
+        function normalizeWeights(changedInputId) {
+            // Get all weight inputs
+            const inputs = Array.from(document.querySelectorAll('#portfolio-weights input[type="range"]'));
+            
+            // Calculate total weight excluding the changed input
+            const changedInput = document.getElementById(changedInputId);
+            const changedValue = parseFloat(changedInput.value);
+            
+            const otherInputs = inputs.filter(input => input.id !== changedInputId);
+            const otherSum = otherInputs.reduce((sum, input) => sum + parseFloat(input.value), 0);
+            
+            // If sum of all weights exceeds 1, adjust other weights proportionally
+            if (changedValue + otherSum > 1) {
+                // If other sum is zero, we can't normalize proportionally
+                if (otherSum === 0) {
+                    changedInput.value = 1;
+                    
+                    // Update value display
+                    const valueDisplay = changedInput.nextElementSibling;
+                    valueDisplay.textContent = `${(changedInput.value * 100).toFixed(0)}%`;
+                    return;
+                }
+                
+                // Calculate scale factor
+                const scaleFactor = (1 - changedValue) / otherSum;
+                
+                // Adjust other weights
+                otherInputs.forEach(input => {
+                    const newValue = parseFloat(input.value) * scaleFactor;
+                    input.value = newValue.toFixed(2);
+                    
+                    // Update value display
+                    const valueDisplay = input.nextElementSibling;
+                    valueDisplay.textContent = `${(newValue * 100).toFixed(0)}%`;
+                });
+            }
+        }
+        
+        // Function to get current portfolio weights
+        function getCurrentWeights() {
+            const weights = {};
+            
+            assets.forEach(asset => {
+                const input = document.getElementById(`weight-${asset}`);
+                weights[asset] = parseFloat(input.value);
+            });
+            
+            return weights;
+        }
+        
+        // Function to calculate current portfolio
+        async function calculatePortfolio() {
+            const weights = getCurrentWeights();
+            
+            try {
+                const response = await fetch('/api/portfolio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ weights })
+                });
+                
+                currentPortfolio = await response.json();
+                
+                // Update portfolio info
+                updatePortfolioInfo();
+                
+                // Update plot with current portfolio
+                plotEfficientFrontier();
+            } catch (error) {
+                console.error('Error calculating portfolio:', error);
+                alert('Error calculating portfolio metrics. Please try again.');
+            }
+        }
+        
+        // Function to update portfolio info
+        function updatePortfolioInfo() {
+            if (!currentPortfolio) return;
+            
+            const infoContainer = document.getElementById('current-portfolio-info');
+            
+            const expected_return = (currentPortfolio.expected_return * 100).toFixed(2);
+            const volatility = (currentPortfolio.volatility * 100).toFixed(2);
+            const sharpe_ratio = currentPortfolio.sharpe_ratio.toFixed(2);
+            
+            let weightsList = '';
+            for (const [asset, weight] of Object.entries(currentPortfolio.weights)) {
+                weightsList += `<li>${asset}: ${(weight * 100).toFixed(2)}%</li>`;
+            }
+            
+            infoContainer.innerHTML = `
+                <h4>Portfolio Metrics</h4>
+                <ul>
+                    <li>Expected Annual Return: ${expected_return}%</li>
+                    <li>Annual Volatility: ${volatility}%</li>
+                    <li>Sharpe Ratio: ${sharpe_ratio}</li>
+                </ul>
+                
+                <h4>Asset Weights</h4>
+                <ul>${weightsList}</ul>
+            `;
+        }
+        
+        // Function to optimize portfolio
+        async function optimizePortfolio(type) {
+            try {
+                const response = await fetch(`/api/optimize?type=${type}`);
+                const data = await response.json();
+                
+                // Update portfolio weights in form
+                for (const [asset, weight] of Object.entries(data.metrics.weights)) {
+                    const input = document.getElementById(`weight-${asset}`);
+                    if (input) {
+                        input.value = weight.toFixed(2);
+                        
+                        // Update value display
+                        const valueDisplay = input.nextElementSibling;
+                        valueDisplay.textContent = `${(weight * 100).toFixed(0)}%`;
+                    }
+                }
+                
+                // Calculate portfolio with new weights
+                await calculatePortfolio();
+            } catch (error) {
+                console.error(`Error optimizing portfolio for ${type}:`, error);
+                alert(`Error optimizing portfolio. Please try again.`);
+            }
+        }
+        
+        // Function to reset weights
+        function resetWeights() {
+            const equalWeight = 1.0 / assets.length;
+            
+            assets.forEach(asset => {
+                const input = document.getElementById(`weight-${asset}`);
+                input.value = equalWeight.toFixed(2);
+                
+                // Update value display
+                const valueDisplay = input.nextElementSibling;
+                valueDisplay.textContent = `${(equalWeight * 100).toFixed(0)}%`;
+            });
+            
+            // Calculate portfolio with new weights
+            calculatePortfolio();
+        }
+        
+        // Function to plot efficient frontier
+        function plotEfficientFrontier() {
+            if (!efficientFrontierData) return;
+            
+            const ef = efficientFrontierData.efficient_frontier;
+            const random = efficientFrontierData.random_portfolios;
+            const min_vol = efficientFrontierData.min_volatility;
+            const max_sharpe = efficientFrontierData.max_sharpe;
+            
+            const traces = [
+                // Efficient Frontier line
+                {
+                    name: 'Efficient Frontier',
+                    x: ef.volatilities,
+                    y: ef.returns,
+                    mode: 'lines',
+                    line: {
+                        color: 'rgba(0, 128, 0, 0.7)',
+                        width: 3
+                    }
+                },
+                // Random portfolios scatter
+                {
+                    name: 'Random Portfolios',
+                    x: random.volatilities,
+                    y: random.returns,
+                    mode: 'markers',
+                    marker: {
+                        color: random.sharpe_ratios,
+                        colorscale: 'Viridis',
+                        size: 8,
+                        opacity: 0.5,
+                        colorbar: {
+                            title: 'Sharpe Ratio'
+                        }
+                    },
+                    type: 'scatter'
+                },
+                // Min Volatility point
+                {
+                    name: 'Minimum Volatility',
+                    x: [min_vol.volatility],
+                    y: [min_vol.return],
+                    mode: 'markers',
+                    marker: {
+                        color: 'red',
+                        size: 12,
+                        symbol: 'circle'
+                    }
+                },
+                // Max Sharpe point
+                {
+                    name: 'Maximum Sharpe Ratio',
+                    x: [max_sharpe.volatility],
+                    y: [max_sharpe.return],
+                    mode: 'markers',
+                    marker: {
+                        color: 'gold',
+                        size: 12,
+                        symbol: 'star'
+                    }
+                }
+            ];
+            
+            // Add current portfolio if available
+            if (currentPortfolio) {
+                traces.push({
+                    name: 'Current Portfolio',
+                    x: [currentPortfolio.volatility],
+                    y: [currentPortfolio.expected_return],
+                    mode: 'markers',
+                    marker: {
+                        color: 'blue',
+                        size: 12,
+                        symbol: 'diamond'
+                    }
+                });
+            }
+            
+            const layout = {
+                title: 'Efficient Frontier',
+                xaxis: {
+                    title: 'Annual Volatility (Standard Deviation)',
+                    tickformat: '.1%'
+                },
+                yaxis: {
+                    title: 'Annual Expected Return',
+                    tickformat: '.1%'
+                },
+                hovermode: 'closest',
+                showlegend: true,
+                legend: {
+                    x: 0,
+                    y: 1
+                }
+            };
+            
+            Plotly.newPlot('efficient-frontier-plot', traces, layout);
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch efficient frontier data on page load
+            fetchEfficientFrontier();
+            
+            // Calculate button
+            document.getElementById('calculate-btn').addEventListener('click', calculatePortfolio);
+            
+            // Reset button
+            document.getElementById('reset-btn').addEventListener('click', resetWeights);
+            
+            // Optimize buttons
+            document.getElementById('max-sharpe-btn').addEventListener('click', () => optimizePortfolio('max_sharpe'));
+            document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
+        });
+    </script>
+</body>
+</html> 
