@@ -6,7 +6,7 @@ A. Investment Policy Statement (IPS)
 - [ ] 3. Afterwards, the IPS cannot be directly edited. Unless user click c red "Adjust My IPS" button, which pops a warning.
 
 B. Efficient Frontier Calculation
-- [ ] 1. The EF expected return and standard deviation should use category average value over the years. The specified funds should be used as representative of each category.
+- [ ] 1. The EF expected return and standard deviation should use category average value over the years. The specified funds should be used as representative of each category. Data of each ticker should be retrieved using Yahoo Finance API, using yfinance python package. The data retrieval should be implemented in stock_handler.py and referenced in app.py
 
 **Equity**
 

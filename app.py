@@ -39,48 +39,105 @@ def providers():
 @app.route('/api/efficient-frontier', methods=['GET'])
 def get_efficient_frontier():
     """Return the efficient frontier data."""
-    ef_data = ef_calculator.get_efficient_frontier()
-    return jsonify(ef_data)
+    try:
+        ef_data = ef_calculator.get_efficient_frontier()
+        return jsonify(ef_data)
+    except Exception as e:
+        print(f"Error calculating efficient frontier: {e}")
+        return jsonify({
+            'error': str(e),
+            'message': 'Failed to calculate efficient frontier'
+        }), 500
 
 @app.route('/api/portfolio', methods=['POST'])
 def calculate_portfolio():
     """Calculate portfolio metrics based on provided weights."""
-    data = request.get_json()
-    weights = data.get('weights', {})
-    
-    # Convert dict to proper format if needed
-    if isinstance(weights, dict):
-        # Check if this is the new grid-based allocation format
-        is_grid_allocation = any(key.startswith(('equity_', 'fixed_')) for key in weights.keys())
+    try:
+        print("=== /api/portfolio endpoint called ===")
+        data = request.get_json()
+        print(f"Received data: {json.dumps(data, indent=2)}")
         
-        if is_grid_allocation:
-            # For grid allocation, we use the weights directly
-            # But we need to ensure all known assets have a weight
-            weight_dict = {asset: 0.0 for asset in stock_handler.get_assets()}
-            
-            # Update with provided weights (may include assets not in stock_handler)
-            # We'll keep only the known assets
-            for asset, weight in weights.items():
-                if asset in stock_handler.get_assets():
-                    weight_dict[asset] = weight
-            
-            # Convert to ordered list matching assets in stock_handler
-            weight_list = [weight_dict.get(asset, 0) for asset in stock_handler.get_assets()]
-            
-        else:
-            # Standard format - convert {asset: weight} to ordered list matching the assets in stock_handler
-            weight_list = [weights.get(asset, 0) for asset in stock_handler.get_assets()]
+        weights = data.get('weights', {})
+        print(f"Extracted weights: {json.dumps(weights, indent=2)}")
         
-        # Normalize weights
-        weight_sum = sum(weight_list)
-        if weight_sum > 0:
-            weight_list = np.array(weight_list) / weight_sum
-            weights = weight_list.tolist()
+        # Check format of weights
+        if isinstance(weights, dict):
+            print("Weights provided as a dictionary")
+            # Get the correct assets list
+            assets = stock_handler.get_assets()
+            print(f"Available assets: {assets}")
+            
+            # Map asset categories to actual asset tickers
+            # This mapping should be configured based on your actual asset allocation
+            asset_mapping = {
+                'equity_small_growth': 'JSMD',
+                'equity_small_blend': 'SWSSX',
+                'equity_small_value': 'VBR',
+                'equity_mid_growth': 'JSMD',  # Example duplicate
+                'equity_mid_blend': 'VEXAX',
+                'equity_mid_value': 'SWMCX',
+                'equity_large_growth': 'FSPGX',
+                'equity_large_blend': 'SWTSX',
+                'equity_large_value': 'SWLVX',
+                'fixed_short_low': 'FSHBX',
+                'fixed_short_mid': 'SJNK',
+                'fixed_short_high': 'ISTB',
+                'fixed_mid_low': 'FBNDX',
+                'fixed_mid_mid': 'LSYAX',
+                'fixed_mid_high': 'VGIT',
+                'fixed_long_low': 'VCLT',
+                'fixed_long_mid': 'JNK',
+                'fixed_long_high': 'VGLT',
+                'cash_cash': 'CASH',
+                'cash_money_market': 'SPAXX',
+                'cash_other_liquid': 'SPAXX'
+            }
+            
+            # Create a ticker-based weight dictionary
+            ticker_weights = {}
+            for category, weight in weights.items():
+                if category in asset_mapping:
+                    ticker = asset_mapping[category]
+                    if ticker not in ticker_weights:
+                        ticker_weights[ticker] = 0
+                    ticker_weights[ticker] += weight
+                    print(f"Mapped {category} with weight {weight} to ticker {ticker}")
+                else:
+                    print(f"Warning: No mapping found for {category}")
+            
+            print(f"Ticker weights: {json.dumps(ticker_weights, indent=2)}")
+            
+            # Convert to weight list in the order of assets
+            weight_list = [ticker_weights.get(asset, 0) for asset in assets]
+            print(f"Weight list before normalization: {weight_list}")
+            
+            # Normalize weights
+            weight_sum = sum(weight_list)
+            print(f"Weight sum: {weight_sum}")
+            
+            if weight_sum > 0:
+                weight_list = np.array(weight_list) / weight_sum
+                weights = weight_list.tolist()
+                print(f"Normalized weights: {weights}")
+            else:
+                weights = weight_list
+                print("Weight sum is zero, not normalizing")
         else:
-            weights = weight_list
-    
-    portfolio_data = ef_calculator.calculate_portfolio_metrics(weights)
-    return jsonify(portfolio_data)
+            print(f"Weights not provided as a dictionary: {type(weights)}")
+        
+        print("Calculating portfolio metrics...")
+        portfolio_data = ef_calculator.calculate_portfolio_metrics(weights)
+        print(f"Portfolio calculation result: {json.dumps(portfolio_data, indent=2)}")
+        
+        return jsonify(portfolio_data)
+    except Exception as e:
+        print(f"Error calculating portfolio metrics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': str(e),
+            'message': 'Failed to calculate portfolio metrics'
+        }), 500
 
 @app.route('/api/optimize', methods=['GET'])
 def optimize_portfolio():

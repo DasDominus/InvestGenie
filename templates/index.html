@@ -285,6 +285,7 @@
                         
                         <div class="mb-3 text-center">
                             <button type="button" class="btn btn-primary action-button" id="update-allocation-btn">Update Portfolio</button>
+                            <button type="button" class="btn btn-secondary action-button" id="test-btn">Test Console Log</button>
                         </div>
                     </div>
                 </div>
@@ -624,10 +625,20 @@
         
         // Function to convert allocation grid to portfolio weights
         function getAllocationWeights() {
+            console.log('getAllocationWeights function called');
+            
             // Get total allocation
-            const totalAllocation = parseFloat(document.getElementById('allocation-grand-total').textContent.replace('$', '').replace(/,/g, '')) || 0;
+            const totalAllocationElement = document.getElementById('allocation-grand-total');
+            console.log('Total allocation element:', totalAllocationElement);
+            
+            const totalAllocationText = totalAllocationElement.textContent;
+            console.log('Total allocation text:', totalAllocationText);
+            
+            const totalAllocation = parseFloat(totalAllocationText.replace('$', '').replace(/,/g, '')) || 0;
+            console.log('Parsed total allocation:', totalAllocation);
             
             if (totalAllocation === 0) {
+                console.log('Total allocation is zero, showing alert');
                 alert('Please allocate some funds before updating the portfolio.');
                 return null;
             }
@@ -644,6 +655,7 @@
                 if (value > 0) {
                     const assetKey = `equity_${row}_${col}`;
                     weights[assetKey] = value / totalAllocation;
+                    console.log(`Added equity weight for ${assetKey}: ${weights[assetKey]}`);
                 }
             });
             
@@ -656,6 +668,7 @@
                 if (value > 0) {
                     const assetKey = `fixed_${row}_${col}`;
                     weights[assetKey] = value / totalAllocation;
+                    console.log(`Added fixed income weight for ${assetKey}: ${weights[assetKey]}`);
                 }
             });
             
@@ -667,19 +680,33 @@
                 if (value > 0) {
                     const assetKey = `cash_${cashType}`;
                     weights[assetKey] = value / totalAllocation;
+                    console.log(`Added cash weight for ${assetKey}: ${weights[assetKey]}`);
                 }
             });
+            
+            console.log('Final weights object:', weights);
+            console.log('Number of weight entries:', Object.keys(weights).length);
             
             return weights;
         }
         
         // Function to update portfolio based on allocation
         function updateAllocation() {
-            const allocationWeights = getAllocationWeights();
-            
-            if (!allocationWeights) return;
+            console.log('updateAllocation function called');
             
             try {
+                const allocationWeights = getAllocationWeights();
+                console.log('getAllocationWeights result:', allocationWeights);
+                
+                if (!allocationWeights) {
+                    console.log('No allocation weights returned, exiting function');
+                    return;
+                }
+                
+                // Log allocation weights before sending
+                console.log('Allocation weights being sent to server:');
+                console.log(JSON.stringify(allocationWeights, null, 2));
+
                 // Calculate portfolio with new weights
                 fetch('/api/portfolio', {
                     method: 'POST',
@@ -688,12 +715,21 @@
                     },
                     body: JSON.stringify({ weights: allocationWeights })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    // Log response data
+                    console.log('Portfolio calculation response:');
+                    console.log(JSON.stringify(data, null, 2));
+
                     currentPortfolio = data;
                     updatePortfolioInfo();
                     plotEfficientFrontier();
-                    // alert('Portfolio updated based on asset allocation.');
                 })
                 .catch(error => {
                     console.error('Error updating portfolio from allocation:', error);
@@ -701,6 +737,7 @@
                 });
             } catch (error) {
                 console.error('Error preparing portfolio update:', error);
+                console.error('Error stack:', error.stack);
                 alert('Error preparing portfolio data. Please check your input values.');
             }
         }
@@ -720,6 +757,32 @@
         
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
+            // Debug check to verify elements exist
+            console.log('DOM loaded, checking elements...');
+            
+            function checkElement(id) {
+                const element = document.getElementById(id);
+                console.log(`Element ${id}: ${element ? 'Found' : 'MISSING'}`);
+                return !!element;
+            }
+            
+            function checkSelector(selector) {
+                const elements = document.querySelectorAll(selector);
+                console.log(`Selector ${selector}: Found ${elements.length} elements`);
+                return elements.length > 0;
+            }
+            
+            // Check critical elements
+            checkElement('update-allocation-btn');
+            checkElement('allocation-grand-total');
+            checkElement('efficient-frontier-plot');
+            checkElement('current-portfolio-info');
+            
+            // Check input grids
+            checkSelector('.equity-cell');
+            checkSelector('.fixed-income-cell');
+            checkSelector('.cash-cell');
+            
             // Fetch efficient frontier data on page load
             fetchEfficientFrontier();
             
@@ -731,7 +794,10 @@
             document.getElementById('min-vol-btn').addEventListener('click', () => optimizePortfolio('min_volatility'));
             
             // Allocation update button
-            document.getElementById('update-allocation-btn').addEventListener('click', updateAllocation);
+            document.getElementById('update-allocation-btn').addEventListener('click', function() {
+                console.log('Update allocation button clicked');
+                updateAllocation();
+            });
             
             // Reset allocation button (we've changed the handler above but we need to call this function)
             // document.getElementById('reset-allocation-btn').addEventListener('click', resetAllocation);
@@ -761,6 +827,12 @@
                 // Load latest
                 loadAggregatedProviderAllocations();
             }
+
+            // Add test button for console log
+            document.getElementById('test-btn').addEventListener('click', function() {
+                console.log('Test button clicked - console logs are working!');
+                alert('Console logs should be visible in the browser developer tools. Check the console tab!');
+            });
         });
         
         // Find and load periods
