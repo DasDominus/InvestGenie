@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestGenie - Adjust Investment Policy Statement</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 70px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #ipsContent {
+            min-height: 400px;
+            font-family: monospace;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">InvestGenie</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Investment Policy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Portfolio Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/providers">Providers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fund_stats">Fund Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h2>Adjust Your Investment Policy Statement</h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger mb-4">
+                    <h4 class="alert-heading">Warning!</h4>
+                    <p>
+                        You are about to modify your Investment Policy Statement. Frequent changes to your IPS
+                        may undermine your long-term investment strategy. Changes should only be made due to:
+                    </p>
+                    <ul>
+                        <li>Significant life changes (marriage, children, retirement)</li>
+                        <li>Major changes to your financial situation</li>
+                        <li>Fundamental shifts in your risk tolerance or time horizon</li>
+                    </ul>
+                    <p>
+                        After making changes, your IPS will require a new signature.
+                    </p>
+                </div>
+                
+                <form action="/create_ips" method="post">
+                    <div class="mb-3">
+                        <label for="ipsContent" class="form-label">Your Investment Policy Statement (Markdown Format)</label>
+                        <textarea class="form-control" id="ipsContent" name="ips_content" rows="15" required>{{ ips_content }}</textarea>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="/" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

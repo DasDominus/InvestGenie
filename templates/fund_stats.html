@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestGenie - Fund Statistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 70px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .fund-selector {
+            margin-bottom: 20px;
+        }
+        #yahooFinanceFrame {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+        .category-title {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">InvestGenie</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Investment Policy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Portfolio Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/providers">Providers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/fund_stats">Fund Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2>Fund Statistics</h2>
+            </div>
+            <div class="card-body">
+                <p class="alert alert-info">
+                    Select a fund to view its detailed statistics from Yahoo Finance.
+                </p>
+                
+                <div class="fund-selector">
+                    <form id="fundForm" method="get" action="/fund_stats">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="tickerSelect" class="form-label">Select Fund:</label>
+                                <select class="form-select" id="tickerSelect" name="ticker" onchange="this.form.submit()">
+                                    {% if tickers %}
+                                        <!-- Equity Funds -->
+                                        <optgroup label="Equity - Large Cap">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["SWLVX", "SWTSX", "FSPGX"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        
+                                        <optgroup label="Equity - Mid Cap">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["SWMCX", "VEXAX", "JSMD"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        
+                                        <optgroup label="Equity - Small Cap">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["VBR", "SWSSX", "JSMD"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        
+                                        <!-- Fixed Income Funds -->
+                                        <optgroup label="Fixed Income - Short Term">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["FSHBX", "SJNK", "ISTB"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        
+                                        <optgroup label="Fixed Income - Intermediate Term">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["FBNDX", "LSYAX", "VGIT"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                        
+                                        <optgroup label="Fixed Income - Long Term">
+                                            {% for ticker in tickers %}
+                                                {% if ticker in ["VCLT", "JNK", "VGLT"] %}
+                                                    <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
+                                                        {{ fund_descriptions[ticker] }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            
+                            {% if selected_ticker %}
+                            <div class="col-md-6">
+                                <div class="card mt-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ fund_descriptions[selected_ticker] }}</h5>
+                                        <p class="card-text">Ticker: {{ selected_ticker }}</p>
+                                        <div class="d-grid">
+                                            <a href="https://finance.yahoo.com/quote/{{ selected_ticker }}" target="_blank" class="btn btn-outline-primary">
+                                                Open in Yahoo Finance
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+                
+                {% if selected_ticker %}
+                <div class="yahoo-finance-container">
+                    <iframe id="yahooFinanceFrame" src="https://finance.yahoo.com/quote/{{ selected_ticker }}/"></iframe>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">
+                    Please select a fund to view its statistics.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestGenie - Create Investment Policy Statement</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 70px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #ipsContent {
+            min-height: 400px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .template-btn {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">InvestGenie</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Investment Policy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Portfolio Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/providers">Providers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fund_stats">Fund Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2>Create Your Investment Policy Statement</h2>
+            </div>
+            <div class="card-body">
+                <p class="alert alert-info">
+                    An Investment Policy Statement (IPS) is a document that outlines your investment goals, strategies, and guidelines.
+                    It serves as a roadmap for your investment decisions and helps you stay focused on your long-term objectives.
+                </p>
+                
+                <div class="mb-3">
+                    <button class="btn btn-outline-secondary template-btn" id="loadTemplate">
+                        Load Template
+                    </button>
+                    <small class="text-muted">Click to load a basic IPS template</small>
+                </div>
+                
+                <form action="/create_ips" method="post">
+                    <div class="mb-3">
+                        <label for="ipsContent" class="form-label">Your Investment Policy Statement (Markdown Format)</label>
+                        <textarea class="form-control" id="ipsContent" name="ips_content" rows="15" required></textarea>
+                    </div>
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Once you create and sign your IPS, it cannot be directly edited unless you click 
+                        the "Adjust My IPS" button, which will show a warning.
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create IPS</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('loadTemplate').addEventListener('click', function() {
+            const templateText = `# Investment Policy Statement
+
+## Investor Information
+- Name: [Your Name]
+- Date Created: ${new Date().toISOString().split('T')[0]}
+- Investment Horizon: [e.g., 20 years, retirement at age 65]
+
+## Investment Objectives
+- [Describe your primary investment goals, e.g., retirement, education funding, wealth preservation]
+- Target Return: [e.g., 7% annually]
+- Risk Tolerance: [e.g., Moderate, Aggressive, Conservative]
+
+## Asset Allocation Strategy
+- Equities: ___%
+  - Large Cap: ___%
+  - Mid Cap: ___%
+  - Small Cap: ___%
+  - International: ___%
+- Fixed Income: ___%
+  - Investment Grade: ___%
+  - High Yield: ___%
+  - Government: ___%
+- Alternative Investments: ___%
+- Cash & Equivalents: ___%
+
+## Rebalancing Policy
+- Rebalancing Frequency: [e.g., Annually, Semi-annually]
+- Rebalancing Threshold: [e.g., +/- 5% from target allocation]
+
+## Investment Constraints
+- Liquidity Requirements: [e.g., need 10% available within 30 days]
+- Time Horizon: [e.g., 20 years until retirement]
+- Tax Considerations: [e.g., tax-efficient investing preferred]
+- Legal/Regulatory: [Any legal or regulatory constraints]
+
+## Performance Monitoring
+- Benchmark Indices: [e.g., S&P 500 for US equities, Bloomberg US Aggregate for bonds]
+- Review Frequency: [e.g., Quarterly, Annually]
+- Success Criteria: [e.g., Outperform benchmarks by 1%, achieve 7% annual return]
+
+## Investment Selection Criteria
+- For Equities: [e.g., P/E ratio below market average, dividend yield above 2%]
+- For Fixed Income: [e.g., minimum credit rating, maximum duration]
+- For Funds: [e.g., expense ratio below 0.5%, manager tenure > 5 years]
+
+## Special Instructions
+- [Any special considerations or restrictions]`;
+            
+            document.getElementById('ipsContent').value = templateText;
+        });
+    </script>
+</body>
+</html> 

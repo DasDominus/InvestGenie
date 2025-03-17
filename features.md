@@ -1,7 +1,7 @@
 Key Features to Implement
 
 A. Investment Policy Statement (IPS)
-- [ ] 1. Support rendering Investment Policy Statement (IPS) as the main page. This should be the index page. The current index (dashboard) should be moved to a dedicated dashboard page.
+- [ ] 1. Support rendering Investment Policy Statement (IPS) as the main page. This should be the index page.
 - [ ] 2. Users should be able to write the IPS if not already set. There should be a sign button, once clicked, user can enter the date and name as signature. The IPS should be saved as a markdown file.
 - [ ] 3. Afterwards, the IPS cannot be directly edited. Unless user click c red "Adjust My IPS" button, which pops a warning.
 

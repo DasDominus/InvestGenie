@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 import json
 import numpy as np
 import pandas as pd
@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import csv
 import io
 import os
+import markdown
 from datetime import datetime
 
 from stock_handler import StockHandler
@@ -26,15 +27,110 @@ PROVIDERS_DIR = 'providers'
 if not os.path.exists(PROVIDERS_DIR):
     os.makedirs(PROVIDERS_DIR)
 
+# Create directory for IPS if it doesn't exist
+IPS_DIR = 'ips'
+if not os.path.exists(IPS_DIR):
+    os.makedirs(IPS_DIR)
+
 @app.route('/')
+def index():
+    """Render the IPS page as the main index page."""
+    ips_file = os.path.join(IPS_DIR, 'investment_policy_statement.md')
+    
+    if os.path.exists(ips_file):
+        # IPS exists, display it
+        with open(ips_file, 'r') as f:
+            ips_content = f.read()
+        
+        # Convert markdown to HTML
+        ips_html = markdown.markdown(ips_content)
+        
+        # Check if IPS is signed
+        is_signed = "## Signature" in ips_content
+        
+        return render_template('ips.html', 
+                              ips_html=ips_html, 
+                              is_signed=is_signed,
+                              ips_content=ips_content)
+    else:
+        # IPS doesn't exist, show the creation form
+        return render_template('create_ips.html')
+
+@app.route('/dashboard')
 def dashboard():
-    """Render the main page."""
+    """Render the portfolio dashboard page."""
     return render_template('dashboard.html')
 
 @app.route('/providers')
 def providers():
     """Render the providers page."""
     return render_template('providers.html')
+
+@app.route('/create_ips', methods=['POST'])
+def create_ips():
+    """Create a new Investment Policy Statement."""
+    ips_content = request.form.get('ips_content', '')
+    
+    ips_file = os.path.join(IPS_DIR, 'investment_policy_statement.md')
+    with open(ips_file, 'w') as f:
+        f.write(ips_content)
+    
+    return redirect(url_for('index'))
+
+@app.route('/sign_ips', methods=['POST'])
+def sign_ips():
+    """Sign the Investment Policy Statement."""
+    name = request.form.get('name', '')
+    date = request.form.get('date', datetime.now().strftime('%Y-%m-%d'))
+    
+    ips_file = os.path.join(IPS_DIR, 'investment_policy_statement.md')
+    
+    if os.path.exists(ips_file):
+        with open(ips_file, 'r') as f:
+            ips_content = f.read()
+        
+        # Add signature if not already signed
+        if "## Signature" not in ips_content:
+            signature = f"\n\n## Signature\n\nSigned by: {name}\nDate: {date}"
+            ips_content += signature
+            
+            with open(ips_file, 'w') as f:
+                f.write(ips_content)
+    
+    return redirect(url_for('index'))
+
+@app.route('/adjust_ips', methods=['POST'])
+def adjust_ips():
+    """Allow adjustment of the IPS after it's been signed."""
+    ips_file = os.path.join(IPS_DIR, 'investment_policy_statement.md')
+    
+    if os.path.exists(ips_file):
+        with open(ips_file, 'r') as f:
+            ips_content = f.read()
+            
+        # Remove signature section if it exists
+        if "## Signature" in ips_content:
+            ips_content = ips_content.split("## Signature")[0].strip()
+        
+        return render_template('adjust_ips.html', ips_content=ips_content)
+    
+    return redirect(url_for('index'))
+
+@app.route('/fund_stats')
+def fund_stats():
+    """Render the fund statistics page."""
+    # Get all tickers from stock_handler
+    all_tickers = stock_handler.get_all_tickers()
+    
+    # Get fund descriptions for better display
+    fund_descriptions = stock_handler.get_fund_descriptions()
+    
+    selected_ticker = request.args.get('ticker', all_tickers[0] if all_tickers else None)
+    
+    return render_template('fund_stats.html', 
+                          tickers=all_tickers,
+                          fund_descriptions=fund_descriptions,
+                          selected_ticker=selected_ticker)
 
 @app.route('/api/efficient-frontier', methods=['GET'])
 def get_efficient_frontier():

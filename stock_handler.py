@@ -50,10 +50,42 @@ class StockHandler:
             self.fixed_long_low, self.fixed_long_mid, self.fixed_long_high
         ]
         
-        # Combine all assets
-        self.assets = self.equity_assets + self.fixed_income_assets
+        # Define fund descriptions for display
+        self.fund_descriptions = {
+            # Equity - Large Cap
+            "SWLVX": "Schwab U.S. Large-Cap Value Index Fund (Large-Cap Value)",
+            "SWTSX": "Schwab Total Stock Market Index Fund (Large-Cap Blend)",
+            "FSPGX": "Fidelity® Large Cap Growth Index Fund (Large-Cap Growth)",
+            
+            # Equity - Mid Cap
+            "SWMCX": "Schwab U.S. Mid-Cap Index Fund (Mid-Cap Value)",
+            "VEXAX": "Vanguard Extended Market Index Fund Admiral Shares (Mid-Cap Blend)",
+            "JSMD": "Janus Henderson Small/Mid Cap Growth Alpha ETF (Mid/Small-Cap Growth)",
+            
+            # Equity - Small Cap
+            "VBR": "Vanguard Small-Cap Value ETF (Small-Cap Value)",
+            "SWSSX": "Schwab Small-Cap Index Fund (Small-Cap Blend)",
+            
+            # Fixed Income - Short Term
+            "FSHBX": "Fidelity® Short-Term Bond Fund (Short-Term, Investment Grade)",
+            "SJNK": "SPDR® Bloomberg Short Term High Yield Bond ETF (Short-Term, High Yield)",
+            "ISTB": "iShares Core 1-5 Year USD Bond ETF (Short-Term, U.S. Government)",
+            
+            # Fixed Income - Intermediate Term
+            "FBNDX": "Fidelity® Investment Grade Bond Fund (Intermediate-Term, Investment Grade)",
+            "LSYAX": "Lord Abbett Short Duration High Yield Fund (Intermediate-Term, High Yield)",
+            "VGIT": "Vanguard Intermediate-Term Government Bond ETF (Intermediate-Term, U.S. Government)",
+            
+            # Fixed Income - Long Term
+            "VCLT": "Vanguard Long-Term Corporate Bond ETF (Long-Term, Investment Grade)",
+            "JNK": "SPDR® Bloomberg High Yield Bond ETF (Long-Term, High Yield)",
+            "VGLT": "Vanguard Long-Term Government Bond ETF (Long-Term, U.S. Government)"
+        }
         
-        # Fetch real historical data
+        # Store fund data in memory
+        self.fund_data = {}
+        
+        # Call the data fetching method
         self._fetch_data()
     
     def _fetch_data(self):
@@ -65,7 +97,7 @@ class StockHandler:
             
             # Fetch data for all assets
             data = yf.download(
-                tickers=self.assets,
+                tickers=self.equity_assets + self.fixed_income_assets,
                 start=start_date,
                 end=end_date,
                 interval="1d",
@@ -76,13 +108,13 @@ class StockHandler:
             
             # Extract closing prices
             # If only one ticker is returned, the data structure is different
-            if len(self.assets) == 1:
+            if len(self.equity_assets + self.fixed_income_assets) == 1:
                 self.prices = pd.DataFrame(data["Close"])
-                self.prices.columns = [self.assets[0]]
+                self.prices.columns = [self.equity_assets[0] if self.equity_assets else self.fixed_income_assets[0]]
             else:
                 # Handle multi-level columns when multiple tickers are fetched
                 self.prices = pd.DataFrame()
-                for ticker in self.assets:
+                for ticker in self.equity_assets + self.fixed_income_assets:
                     try:
                         # Try to get Close price from multi-index
                         if (ticker, 'Close') in data.columns:
@@ -109,7 +141,7 @@ class StockHandler:
             self.mean_returns = self.returns.mean()
             self.cov_matrix = self.returns.cov()
             
-            print(f"Successfully fetched data for {len(self.assets)} assets")
+            print(f"Successfully fetched data for {len(self.equity_assets + self.fixed_income_assets)} assets")
             
         except Exception as e:
             print(f"Error fetching data: {e}")
@@ -131,7 +163,7 @@ class StockHandler:
         self.prices = pd.DataFrame(index=dates)
         
         # Generate realistic returns for each asset category
-        for asset in self.assets:
+        for asset in self.equity_assets + self.fixed_income_assets:
             # Assign realistic returns and volatilities based on asset class
             if asset in self.equity_assets:
                 if 'large' in asset:
@@ -170,7 +202,7 @@ class StockHandler:
         
     def get_assets(self):
         """Return the list of assets."""
-        return self.assets
+        return self.equity_assets + self.fixed_income_assets
     
     def get_prices(self):
         """Return the price data."""
@@ -186,4 +218,18 @@ class StockHandler:
     
     def get_cov_matrix(self):
         """Return the covariance matrix."""
-        return self.cov_matrix 
+        return self.cov_matrix
+    
+    def get_all_tickers(self):
+        """Return all tickers used in the application."""
+        return self.equity_assets + self.fixed_income_assets
+    
+    def get_fund_descriptions(self):
+        """Return the descriptions of all funds."""
+        return self.fund_descriptions
+    
+    def get_fund_data(self, ticker):
+        """Return the stored data for a specific fund."""
+        if ticker in self.fund_data:
+            return self.fund_data[ticker]
+        return None 
