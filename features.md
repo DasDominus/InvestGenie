@@ -44,7 +44,4 @@ C. Render Representative fund statistics
 
 D. Plot Efficient Frontier of sample portfolios.
 
-- [ ] 1. Plot return / standard deviation line for 100% stock using sp500 (ticker: spy)
-- [ ] 2. Plot return / standard deviation line for 100% bond using BMOAX
-- [ ] 3. Plot a 60 stock / 40 bond portfolio
-- [ ] 4. Plot a 70 stock / 30 bond portfolio
+- [ ] 1. Render the return / standard deviation line for various stock (spy) and bond (bmoax) composition in dashboard.html this should be calculated in the backend and rendered in the frontend.

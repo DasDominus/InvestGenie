@@ -136,13 +136,73 @@ def fund_stats():
 def get_efficient_frontier():
     """Return the efficient frontier data."""
     try:
+        print("=== /api/efficient-frontier endpoint called ===")
+        print("Calculating efficient frontier...")
+        
+        start_time = datetime.now()
         ef_data = ef_calculator.get_efficient_frontier()
+        calculation_time = (datetime.now() - start_time).total_seconds()
+        
+        print(f"Efficient frontier calculation completed in {calculation_time:.2f} seconds")
+        print(f"Efficient frontier data points: {len(ef_data['efficient_frontier']['returns'])}")
+        print(f"Random portfolios data points: {len(ef_data['random_portfolios']['returns'])}")
+        print(f"Min volatility portfolio return: {ef_data['min_volatility']['return']:.4f}")
+        print(f"Min volatility portfolio volatility: {ef_data['min_volatility']['volatility']:.4f}")
+        print(f"Max Sharpe portfolio return: {ef_data['max_sharpe']['return']:.4f}")
+        print(f"Max Sharpe portfolio volatility: {ef_data['max_sharpe']['volatility']:.4f}")
+        
         return jsonify(ef_data)
     except Exception as e:
         print(f"Error calculating efficient frontier: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'error': str(e),
             'message': 'Failed to calculate efficient frontier'
+        }), 500
+
+@app.route('/api/stock-bond-frontier', methods=['GET'])
+def get_stock_bond_frontier():
+    """Return the stock-bond composition frontier data for SPY and BMOAX."""
+    try:
+        print("=== /api/stock-bond-frontier endpoint called ===")
+        
+        # Get number of points from query params, default to 11
+        num_points = request.args.get('points', default=50, type=int)
+        print(f"Requested {num_points} data points for stock-bond frontier")
+        
+        # Calculate the stock-bond frontier
+        start_time = datetime.now()
+        frontier_data = ef_calculator.get_stock_bond_frontier(num_points=num_points)
+        calculation_time = (datetime.now() - start_time).total_seconds()
+        
+        print(f"Stock-bond frontier calculation completed in {calculation_time:.2f} seconds")
+        
+        # Log some basic information about the returned data
+        if 'raw_data' in frontier_data and frontier_data['raw_data']:
+            data_points = len(frontier_data['raw_data'])
+            print(f"Stock-bond frontier data points: {data_points}")
+            
+            # Log sample data points (first, middle, last)
+            if data_points > 0:
+                first_point = frontier_data['raw_data'][0]
+                print(f"First point (100% Bond): Return={first_point['return']:.4f}, Volatility={first_point['volatility']:.4f}")
+                
+                if data_points > 2:
+                    mid_point = frontier_data['raw_data'][data_points // 2]
+                    print(f"Middle point (~50/50): Return={mid_point['return']:.4f}, Volatility={mid_point['volatility']:.4f}")
+                
+                last_point = frontier_data['raw_data'][data_points - 1]
+                print(f"Last point (100% Stock): Return={last_point['return']:.4f}, Volatility={last_point['volatility']:.4f}")
+        
+        return jsonify(frontier_data)
+    except Exception as e:
+        print(f"Error calculating stock-bond frontier: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': str(e),
+            'message': 'Failed to calculate stock-bond frontier'
         }), 500
 
 @app.route('/api/portfolio', methods=['POST'])

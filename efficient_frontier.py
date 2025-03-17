@@ -190,6 +190,248 @@ class EfficientFrontier:
         
         return response
     
+    def get_stock_bond_frontier(self, num_points=11):
+        """
+        Calculate return and standard deviation for various compositions of 
+        SPY (stock) and BMOAX (bond).
+        
+        Args:
+            num_points: Number of portfolio allocations to generate
+                       (default 11 for 0% to 100% in 10% increments)
+                       
+        Returns:
+            Dictionary with the frontier data for Plotly
+        """
+        print(f"Calculating stock-bond frontier with {num_points} points")
+        
+        # Download the historical data for SPY and BMOAX
+        try:
+            import yfinance as yf
+            from datetime import datetime, timedelta
+            
+            print("Fetching historical data for SPY and BMOAX")
+            # Create date range for the last 5 years
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=5*365)
+            print(f"Date range: {start_date} to {end_date}")
+            
+            # Fetch data for SPY and BMOAX
+            data = yf.download(
+                tickers=["SPY", "BMOAX"],
+                start=start_date,
+                end=end_date,
+                interval="1d",
+                group_by="ticker",
+                auto_adjust=True,
+                progress=False
+            )
+            
+            print(f"Downloaded data shape: {data.shape}")
+            
+            # Extract closing prices
+            prices = pd.DataFrame()
+            
+            # Handle multi-level columns
+            if ("SPY", "Close") in data.columns and ("BMOAX", "Close") in data.columns:
+                print("Successfully extracted SPY and BMOAX closing prices")
+                prices["SPY"] = data[("SPY", "Close")]
+                prices["BMOAX"] = data[("BMOAX", "Close")]
+            else:
+                print("Could not find SPY and BMOAX closing prices in downloaded data")
+                print(f"Available columns: {data.columns}")
+                # Fallback to mock data if we can't get the actual data
+                print("Falling back to mock data")
+                return self._generate_mock_stock_bond_frontier(num_points)
+            
+            # Drop any rows with missing values
+            original_row_count = len(prices)
+            prices = prices.dropna()
+            print(f"Dropped {original_row_count - len(prices)} rows with NaN values, {len(prices)} rows remaining")
+            
+            # Calculate daily returns
+            returns = prices.pct_change().dropna()
+            print(f"Calculated returns with shape: {returns.shape}")
+            
+            # Calculate mean returns and covariance matrix
+            mean_returns = returns.mean()
+            cov_matrix = returns.cov()
+            print(f"Mean daily returns: SPY={mean_returns['SPY']:.6f}, BMOAX={mean_returns['BMOAX']:.6f}")
+            print(f"Daily return correlation: {returns.corr().iloc[0,1]:.6f}")
+            
+            # Calculate annual returns and covariance (assuming 252 trading days)
+            annual_returns = mean_returns * 252
+            annual_cov_matrix = cov_matrix * 252
+            print(f"Annualized returns: SPY={annual_returns['SPY']:.4f} ({annual_returns['SPY']*100:.2f}%), " +
+                  f"BMOAX={annual_returns['BMOAX']:.4f} ({annual_returns['BMOAX']*100:.2f}%)")
+            print(f"Annualized volatility: SPY={np.sqrt(annual_cov_matrix.iloc[0,0]):.4f} ({np.sqrt(annual_cov_matrix.iloc[0,0])*100:.2f}%), " +
+                  f"BMOAX={np.sqrt(annual_cov_matrix.iloc[1,1]):.4f} ({np.sqrt(annual_cov_matrix.iloc[1,1])*100:.2f}%)")
+            
+            # Generate weights for the stock-bond allocations
+            weights_list = []
+            for i in range(num_points):
+                stock_weight = i / (num_points - 1) if num_points > 1 else 0
+                bond_weight = 1 - stock_weight
+                weights_list.append([stock_weight, bond_weight])
+            
+            print(f"Generated {len(weights_list)} weight combinations")
+            
+            # Calculate portfolio metrics for each weight allocation
+            portfolio_data = []
+            for weights in weights_list:
+                # Calculate portfolio return
+                portfolio_return = np.sum(annual_returns * weights)
+                
+                # Calculate portfolio volatility (standard deviation)
+                portfolio_std = np.sqrt(weights @ annual_cov_matrix @ weights)
+                
+                # Calculate Sharpe ratio
+                sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_std if portfolio_std > 0 else 0
+                
+                # Calculate stock percentage for labeling
+                stock_pct = weights[0] * 100
+                
+                portfolio_data.append({
+                    'return': portfolio_return,
+                    'volatility': portfolio_std,
+                    'sharpe': sharpe_ratio,
+                    'weights': {
+                        'SPY': weights[0],
+                        'BMOAX': weights[1]
+                    },
+                    'stock_pct': stock_pct
+                })
+            
+            print("Portfolio metrics calculated for all weight combinations")
+            # Log a sample of the data
+            print(f"Sample metrics for 50/50 portfolio (if available):")
+            mid_point = len(portfolio_data) // 2
+            if 0 <= mid_point < len(portfolio_data):
+                print(f"  Return: {portfolio_data[mid_point]['return']:.4f} ({portfolio_data[mid_point]['return']*100:.2f}%)")
+                print(f"  Volatility: {portfolio_data[mid_point]['volatility']:.4f} ({portfolio_data[mid_point]['volatility']*100:.2f}%)")
+                print(f"  Sharpe Ratio: {portfolio_data[mid_point]['sharpe']:.4f}")
+            
+            # Format the data for Plotly
+            stock_bond_data = {
+                'x': [p['volatility'] for p in portfolio_data],
+                'y': [p['return'] for p in portfolio_data],
+                'mode': 'lines+markers',
+                'name': 'Stock-Bond Frontier',
+                'type': 'scatter',
+                'line': {'color': 'blue', 'width': 2},
+                'marker': {'size': 8},
+                'text': [f"Stock: {p['stock_pct']:.0f}%, Bond: {(100-p['stock_pct']):.0f}%" 
+                         for p in portfolio_data],
+                'hoverinfo': 'text+x+y',
+                'hovertemplate': 'Volatility: %{x:.4f}<br>Return: %{y:.4f}<br>%{text}'
+            }
+            
+            print("Stock-bond frontier data formatted successfully for Plotly")
+            return {
+                'stock_bond_frontier': stock_bond_data,
+                'raw_data': portfolio_data
+            }
+            
+        except Exception as e:
+            print(f"Error generating stock-bond frontier: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback to mock data
+            print("Falling back to mock data due to error")
+            return self._generate_mock_stock_bond_frontier(num_points)
+    
+    def _generate_mock_stock_bond_frontier(self, num_points=11):
+        """
+        Generate mock data for stock-bond frontier when real data is unavailable.
+        """
+        print(f"Generating mock stock-bond frontier data with {num_points} points")
+        
+        # Typical annual return and volatility values
+        spy_return = 0.10  # 10% annual return for stocks
+        spy_vol = 0.18     # 18% annual volatility for stocks
+        bmoax_return = 0.04  # 4% annual return for bonds
+        bmoax_vol = 0.05     # 5% annual volatility for bonds
+        
+        # Correlation between stocks and bonds (typically negative or low)
+        correlation = -0.1
+        
+        print(f"Mock data parameters:")
+        print(f"  SPY return: {spy_return:.4f} ({spy_return*100:.1f}%)")
+        print(f"  SPY volatility: {spy_vol:.4f} ({spy_vol*100:.1f}%)")
+        print(f"  BMOAX return: {bmoax_return:.4f} ({bmoax_return*100:.1f}%)")
+        print(f"  BMOAX volatility: {bmoax_vol:.4f} ({bmoax_vol*100:.1f}%)")
+        print(f"  Correlation: {correlation:.4f}")
+        
+        # Generate weights for the stock-bond allocations
+        weights_list = []
+        for i in range(num_points):
+            stock_weight = i / (num_points - 1) if num_points > 1 else 0
+            bond_weight = 1 - stock_weight
+            weights_list.append([stock_weight, bond_weight])
+        
+        print(f"Generated {len(weights_list)} weight combinations")
+        
+        # Calculate portfolio metrics for each weight allocation
+        portfolio_data = []
+        for weights in weights_list:
+            # Calculate weighted return
+            portfolio_return = weights[0] * spy_return + weights[1] * bmoax_return
+            
+            # Calculate portfolio volatility using correlation
+            # Formula: σp² = w1²σ1² + w2²σ2² + 2w1w2σ1σ2ρ12
+            portfolio_var = (weights[0]**2 * spy_vol**2 + 
+                            weights[1]**2 * bmoax_vol**2 + 
+                            2 * weights[0] * weights[1] * spy_vol * bmoax_vol * correlation)
+            portfolio_std = np.sqrt(portfolio_var)
+            
+            # Calculate Sharpe ratio
+            sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_std if portfolio_std > 0 else 0
+            
+            # Calculate stock percentage for labeling
+            stock_pct = weights[0] * 100
+            
+            portfolio_data.append({
+                'return': portfolio_return,
+                'volatility': portfolio_std,
+                'sharpe': sharpe_ratio,
+                'weights': {
+                    'SPY': weights[0],
+                    'BMOAX': weights[1]
+                },
+                'stock_pct': stock_pct
+            })
+        
+        print("Portfolio metrics calculated for all mock weight combinations")
+        
+        # Log a sample of the data
+        print(f"Sample mock metrics for 50/50 portfolio (if available):")
+        mid_point = len(portfolio_data) // 2
+        if 0 <= mid_point < len(portfolio_data):
+            print(f"  Return: {portfolio_data[mid_point]['return']:.4f} ({portfolio_data[mid_point]['return']*100:.2f}%)")
+            print(f"  Volatility: {portfolio_data[mid_point]['volatility']:.4f} ({portfolio_data[mid_point]['volatility']*100:.2f}%)")
+            print(f"  Sharpe Ratio: {portfolio_data[mid_point]['sharpe']:.4f}")
+        
+        # Format the data for Plotly
+        stock_bond_data = {
+            'x': [p['volatility'] for p in portfolio_data],
+            'y': [p['return'] for p in portfolio_data],
+            'mode': 'lines+markers',
+            'name': 'Stock-Bond Frontier',
+            'type': 'scatter',
+            'line': {'color': 'blue', 'width': 2},
+            'marker': {'size': 8},
+            'text': [f"Stock: {p['stock_pct']:.0f}%, Bond: {(100-p['stock_pct']):.0f}%" 
+                     for p in portfolio_data],
+            'hoverinfo': 'text+x+y',
+            'hovertemplate': 'Volatility: %{x:.4f}<br>Return: %{y:.4f}<br>%{text}'
+        }
+        
+        print("Mock stock-bond frontier data formatted successfully for Plotly")
+        
+        return {
+            'stock_bond_frontier': stock_bond_data,
+            'raw_data': portfolio_data
+        }
+    
     def _generate_random_portfolios(self, num_portfolios=100):
         """Generate random portfolios for comparison."""
         results = []
