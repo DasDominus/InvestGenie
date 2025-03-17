@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InvestGenie - Provider Allocations</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         body {
             padding-top: 70px; /* Added padding for fixed navbar */
@@ -104,6 +105,27 @@
                         <button class="btn btn-outline-secondary btn-sm me-2" id="copy-last-period-btn">Copy Last Allocation</button>
                         <button class="btn btn-success" id="save-providers-btn">Save</button>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Provider Navigation Controls -->
+        <div class="provider-navigation mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-start">
+                    <button class="btn btn-outline-primary" id="prev-provider-btn" disabled>
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </button>
+                </div>
+                <div class="col-md-8">
+                    <select class="form-select" id="provider-selector" disabled>
+                        <option value="">No providers available</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-outline-primary" id="next-provider-btn" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -278,6 +300,7 @@
             let nextProviderId = 1;
             let currentYear = new Date().getFullYear();
             let currentQuarter = Math.floor((new Date().getMonth() + 3) / 3);
+            let currentProviderIndex = 0; // Track the currently displayed provider
             
             // Load providers from local storage on page load
             document.addEventListener('DOMContentLoaded', function() {
@@ -329,6 +352,25 @@
                 
                 // Add event listener for the Copy Last Allocation button
                 document.getElementById('copy-last-period-btn').addEventListener('click', copyLastPeriod);
+                
+                // Add event listeners for provider navigation
+                document.getElementById('prev-provider-btn').addEventListener('click', showPreviousProvider);
+                document.getElementById('next-provider-btn').addEventListener('click', showNextProvider);
+                document.getElementById('provider-selector').addEventListener('change', function() {
+                    const selectedIndex = this.selectedIndex;
+                    if (selectedIndex >= 0) {
+                        showProviderAtIndex(selectedIndex);
+                    }
+                });
+                
+                // Add keyboard navigation for left/right arrow keys
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'ArrowLeft') {
+                        showPreviousProvider();
+                    } else if (event.key === 'ArrowRight') {
+                        showNextProvider();
+                    }
+                });
             });
             
             // Function to load available periods
@@ -369,10 +411,14 @@
                                     return id > max ? id : max;
                                 }, 0) + 1 : 1;
                             
-                            // Add providers to UI
-                            providers.forEach(provider => {
-                                addProviderToUI(provider);
-                            });
+                            // Update provider selector
+                            updateProviderSelector();
+                            
+                            // Display the first provider if available
+                            if (providers.length > 0) {
+                                currentProviderIndex = 0;
+                                showProviderAtIndex(currentProviderIndex);
+                            }
                             
                             // Update the current period indicator
                             const periodIndicator = document.getElementById('current-period-indicator');
@@ -389,6 +435,75 @@
                         console.error('Error loading providers for period:', error);
                         alert('Error loading providers. Please try again.');
                     });
+            }
+            
+            // Function to update the provider selector dropdown
+            function updateProviderSelector() {
+                const selector = document.getElementById('provider-selector');
+                selector.innerHTML = '';
+                
+                if (providers.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No providers available';
+                    selector.appendChild(option);
+                    selector.disabled = true;
+                    
+                    // Disable navigation buttons
+                    document.getElementById('prev-provider-btn').disabled = true;
+                    document.getElementById('next-provider-btn').disabled = true;
+                } else {
+                    providers.forEach((provider, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = provider.name;
+                        selector.appendChild(option);
+                    });
+                    selector.disabled = false;
+                    
+                    // Update navigation button states
+                    updateNavigationButtons();
+                }
+            }
+            
+            // Function to show the provider at a specific index
+            function showProviderAtIndex(index) {
+                if (index < 0 || index >= providers.length) return;
+                
+                // Update the current index
+                currentProviderIndex = index;
+                
+                // Update the selector
+                document.getElementById('provider-selector').selectedIndex = index;
+                
+                // Clear the provider list UI
+                document.getElementById('provider-list').innerHTML = '';
+                
+                // Add the selected provider to the UI
+                addProviderToUI(providers[index]);
+                
+                // Update navigation buttons
+                updateNavigationButtons();
+            }
+            
+            // Function to show the previous provider
+            function showPreviousProvider() {
+                if (currentProviderIndex > 0) {
+                    showProviderAtIndex(currentProviderIndex - 1);
+                }
+            }
+            
+            // Function to show the next provider
+            function showNextProvider() {
+                if (currentProviderIndex < providers.length - 1) {
+                    showProviderAtIndex(currentProviderIndex + 1);
+                }
+            }
+            
+            // Function to update navigation button states
+            function updateNavigationButtons() {
+                document.getElementById('prev-provider-btn').disabled = currentProviderIndex <= 0;
+                document.getElementById('next-provider-btn').disabled = currentProviderIndex >= providers.length - 1;
             }
             
             // Function to add a new provider
@@ -449,8 +564,11 @@
                 
                 providers.push(provider);
                 
-                // Add provider to UI
-                addProviderToUI(provider);
+                // Update provider selector
+                updateProviderSelector();
+                
+                // Show the newly added provider
+                showProviderAtIndex(providers.length - 1);
                 
                 // Clear input
                 document.getElementById('new-provider-name').value = '';
@@ -677,13 +795,27 @@
 
             // Function to remove provider
             function removeProvider(providerId) {
-                // Remove from array
-                providers = providers.filter(p => p.id !== providerId);
+                // Find the index to remove
+                const indexToRemove = providers.findIndex(p => p.id === providerId);
                 
-                // Remove from UI
-                const providerCard = document.querySelector(`.provider-card[data-provider-id="${providerId}"]`);
-                if (providerCard) {
-                    providerCard.remove();
+                if (indexToRemove === -1) return;
+                
+                // Remove from array
+                providers.splice(indexToRemove, 1);
+                
+                // Update provider selector
+                updateProviderSelector();
+                
+                // If we removed the current provider, show another one
+                if (providers.length > 0) {
+                    // If we removed the last provider, show the new last one
+                    if (currentProviderIndex >= providers.length) {
+                        currentProviderIndex = providers.length - 1;
+                    }
+                    showProviderAtIndex(currentProviderIndex);
+                } else {
+                    // No providers left, clear the UI
+                    document.getElementById('provider-list').innerHTML = '';
                 }
                 
                 // Get the currently selected year and quarter from the UI
@@ -778,11 +910,14 @@
                             // We have the previous period's providers, now save them to the current period
                             providers = data.providers;
                             
-                            // Clear the provider list UI and rebuild it
-                            document.getElementById('provider-list').innerHTML = '';
-                            providers.forEach(provider => {
-                                addProviderToUI(provider);
-                            });
+                            // Update provider selector
+                            updateProviderSelector();
+                            
+                            // Show the first provider if available
+                            if (providers.length > 0) {
+                                currentProviderIndex = 0;
+                                showProviderAtIndex(currentProviderIndex);
+                            }
                             
                             // Save these providers to the current period
                             saveProviders(targetYear, targetQuarter);
