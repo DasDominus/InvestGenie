@@ -41,3 +41,9 @@ B. Efficient Frontier Calculation
   - *Investment Grade:* **Vanguard Long-Term Corporate Bond ETF (VCLT)** – Invests in long-duration, high-quality corporate bonds. 
   - *High Yield (Junk):* **SPDR® Bloomberg High Yield Bond ETF (JNK)** – Provides exposure to long-term, high-yield corporate bonds.
   - *U.S. Government:* **Vanguard Long-Term Government Bond ETF (VGLT)** – Focuses on long-duration U.S. government bonds.
+
+C. Render Representative fund statistics
+
+- [ ] 1. Each fund in stock_handler.py should have it's data temporarily saved in memory.
+- [ ] 2. There should be fund stats page ("Fund Stats") that allows user to choose which fund's stats to render
+- [ ] 3. The page should just render yahoo finance page directly. i.e https://finance.yahoo.com/quote/FCPGX/ for FCPGX

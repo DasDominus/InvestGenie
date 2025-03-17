@@ -70,10 +70,10 @@ def calculate_portfolio():
             # Map asset categories to actual asset tickers
             # This mapping should be configured based on your actual asset allocation
             asset_mapping = {
-                'equity_small_growth': 'JSMD',
+                'equity_small_growth': 'FCPGX',
                 'equity_small_blend': 'SWSSX',
                 'equity_small_value': 'VBR',
-                'equity_mid_growth': 'JSMD',  # Example duplicate
+                'equity_mid_growth': 'IJK',
                 'equity_mid_blend': 'VEXAX',
                 'equity_mid_value': 'SWMCX',
                 'equity_large_growth': 'FSPGX',
