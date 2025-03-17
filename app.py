@@ -27,9 +27,9 @@ if not os.path.exists(PROVIDERS_DIR):
     os.makedirs(PROVIDERS_DIR)
 
 @app.route('/')
-def index():
+def dashboard():
     """Render the main page."""
-    return render_template('index.html')
+    return render_template('dashboard.html')
 
 @app.route('/providers')
 def providers():
