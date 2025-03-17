@@ -18,11 +18,11 @@ class StockHandler:
         
         self.equity_mid_value = "SWMCX"  # Schwab U.S. Mid-Cap Index Fund
         self.equity_mid_blend = "VEXAX"  # Vanguard Extended Market Index Fund Admiral Shares
-        self.equity_mid_growth = "JSMD"  # Janus Henderson Small/Mid Cap Growth Alpha ETF
+        self.equity_mid_growth = "IJK"  # iShares S&P Mid-Cap 400 Growth ETF
         
         self.equity_small_value = "VBR"  # Vanguard Small-Cap Value ETF
         self.equity_small_blend = "SWSSX"  # Schwab Small-Cap Index Fund
-        self.equity_small_growth = "JSMD"  # Janus Henderson Small/Mid Cap Growth Alpha ETF (same as mid_growth)
+        self.equity_small_growth = "FCPGX"  # Fidelity Small Cap Growth
         
         # Fixed income funds
         self.fixed_short_low = "FSHBX"  # Fidelity® Short-Term Bond Fund (Investment Grade)
