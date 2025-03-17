@@ -60,11 +60,12 @@ class StockHandler:
             # Equity - Mid Cap
             "SWMCX": "Schwab U.S. Mid-Cap Index Fund (Mid-Cap Value)",
             "VEXAX": "Vanguard Extended Market Index Fund Admiral Shares (Mid-Cap Blend)",
-            "JSMD": "Janus Henderson Small/Mid Cap Growth Alpha ETF (Mid/Small-Cap Growth)",
+            "IJK": "iShares S&P Mid-Cap 400 Growth ETF (Mid-Cap Growth)",
             
             # Equity - Small Cap
             "VBR": "Vanguard Small-Cap Value ETF (Small-Cap Value)",
             "SWSSX": "Schwab Small-Cap Index Fund (Small-Cap Blend)",
+            "FCPGX": "Fidelity Small Cap Growth Fund (Small-Cap Growth)",
             
             # Fixed Income - Short Term
             "FSHBX": "Fidelity® Short-Term Bond Fund (Short-Term, Investment Grade)",

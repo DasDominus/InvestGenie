@@ -8,39 +8,32 @@ A. Investment Policy Statement (IPS)
 B. Efficient Frontier Calculation
 - [ ] 1. The EF expected return and standard deviation should use category average value over the years. The specified funds should be used as representative of each category. Data of each ticker should be retrieved using Yahoo Finance API, using yfinance python package. The data retrieval should be implemented in stock_handler.py and referenced in app.py
 
-**Equity**
-
-- **Large-Cap Funds:**
-  - *Value:* **Schwab U.S. Large-Cap Value Index Fund (SWLVX)** – This fund tracks large-cap companies with value characteristics. 
-  - *Blend:* **Schwab Total Stock Market Index Fund (SWTSX)** – Offers exposure to a broad range of large-cap stocks, blending both value and growth styles. 
-  - *Growth:* **Fidelity® Large Cap Growth Index Fund (FSPGX)** – Focuses on large-cap companies with growth potential. 
-
-- **Mid-Cap Funds:**
-  - *Value:* **Schwab U.S. Mid-Cap Index Fund (SWMCX)** – Provides exposure to mid-cap companies with value characteristics. 
-  - *Blend:* **Vanguard Extended Market Index Fund Admiral Shares (VEXAX)** – Covers mid-cap companies across both value and growth styles. 
-  - *Growth:* **Janus Henderson Small/Mid Cap Growth Alpha ETF (JSMD)** – Targets small to mid-cap companies with growth potential. 
-
-- **Small-Cap Funds:**
-  - *Value:* **Vanguard Small-Cap Value ETF (VBR)** – Focuses on small-cap companies with value characteristics. 
-  - *Blend:* **Schwab Small-Cap Index Fund (SWSSX)** – Provides exposure to a broad range of small-cap companies, blending both value and growth styles. 
-  - *Growth:* **Janus Henderson Small/Mid Cap Growth Alpha ETF (JSMD)** – Also applicable here due to its focus on small to mid-cap growth companies. 
-
-**Fixed Income**
-
-- **Short-Term Bonds:**
-  - *Investment Grade:* **Fidelity® Short-Term Bond Fund (FSHBX)** – Invests in high-quality, short-duration bonds. 
-  - *High Yield (Junk):* **SPDR® Bloomberg Short Term High Yield Bond ETF (SJNK)** – Provides exposure to short-term, high-yield corporate bonds. 
-  - *U.S. Government:* **iShares Core 1-5 Year USD Bond ETF (ISTB)** – Includes short-term U.S. government bonds.
-
-- **Intermediate-Term Bonds:**
-  - *Investment Grade:* **Fidelity® Investment Grade Bond Fund (FBNDX)** – Focuses on medium-duration, high-quality bonds.
-  - *High Yield (Junk):* **Lord Abbett Short Duration High Yield Fund (LSYAX)** – Invests in high-yield bonds with shorter durations.
-  - *U.S. Government:* **Vanguard Intermediate-Term Government Bond ETF (VGIT)** – Targets intermediate-term U.S. government bonds.
-
-- **Long-Term Bonds:**
-  - *Investment Grade:* **Vanguard Long-Term Corporate Bond ETF (VCLT)** – Invests in long-duration, high-quality corporate bonds. 
-  - *High Yield (Junk):* **SPDR® Bloomberg High Yield Bond ETF (JNK)** – Provides exposure to long-term, high-yield corporate bonds.
-  - *U.S. Government:* **Vanguard Long-Term Government Bond ETF (VGLT)** – Focuses on long-duration U.S. government bonds.
+        # Equity funds
+        self.equity_large_value = "SWLVX"  # Schwab U.S. Large-Cap Value Index Fund
+        self.equity_large_blend = "SWTSX"  # Schwab Total Stock Market Index Fund
+        self.equity_large_growth = "FSPGX"  # Fidelity® Large Cap Growth Index Fund
+        
+        self.equity_mid_value = "SWMCX"  # Schwab U.S. Mid-Cap Index Fund
+        self.equity_mid_blend = "VEXAX"  # Vanguard Extended Market Index Fund Admiral Shares
+        self.equity_mid_growth = "IJK"  # iShares S&P Mid-Cap 400 Growth ETF
+        
+        self.equity_small_value = "VBR"  # Vanguard Small-Cap Value ETF
+        self.equity_small_blend = "SWSSX"  # Schwab Small-Cap Index Fund
+        self.equity_small_growth = "FCPGX"  # Fidelity Small Cap Growth
+        
+        # Fixed income funds
+        self.fixed_short_low = "FSHBX"  # Fidelity® Short-Term Bond Fund (Investment Grade)
+        self.fixed_short_mid = "SJNK"  # SPDR® Bloomberg Short Term High Yield Bond ETF (High Yield/Junk)
+        self.fixed_short_high = "ISTB"  # iShares Core 1-5 Year USD Bond ETF (U.S. Government)
+        
+        self.fixed_mid_low = "FBNDX"  # Fidelity® Investment Grade Bond Fund
+        self.fixed_mid_mid = "LSYAX"  # Lord Abbett Short Duration High Yield Fund
+        self.fixed_mid_high = "VGIT"  # Vanguard Intermediate-Term Government Bond ETF
+        
+        self.fixed_long_low = "VCLT"  # Vanguard Long-Term Corporate Bond ETF
+        self.fixed_long_mid = "JNK"  # SPDR® Bloomberg High Yield Bond ETF
+        self.fixed_long_high = "VGLT"  # Vanguard Long-Term Government Bond ETF
+        
 
 C. Render Representative fund statistics
 

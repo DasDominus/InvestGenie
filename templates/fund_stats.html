@@ -32,6 +32,32 @@
             font-size: 0.9rem;
             color: #495057;
         }
+        .fund-details-card {
+            margin-top: 20px;
+            padding: 20px;
+        }
+        .fund-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .metric-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .disclaimer {
+            font-size: 0.8rem;
+            margin-top: 20px;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
@@ -91,7 +117,7 @@
                                         
                                         <optgroup label="Equity - Mid Cap">
                                             {% for ticker in tickers %}
-                                                {% if ticker in ["SWMCX", "VEXAX", "JSMD"] %}
+                                                {% if ticker in ["SWMCX", "VEXAX", "IJK"] %}
                                                     <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
                                                         {{ fund_descriptions[ticker] }}
                                                     </option>
@@ -101,7 +127,7 @@
                                         
                                         <optgroup label="Equity - Small Cap">
                                             {% for ticker in tickers %}
-                                                {% if ticker in ["VBR", "SWSSX", "JSMD"] %}
+                                                {% if ticker in ["VBR", "SWSSX", "FCPGX"] %}
                                                     <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>
                                                         {{ fund_descriptions[ticker] }}
                                                     </option>
@@ -163,8 +189,82 @@
                 </div>
                 
                 {% if selected_ticker %}
-                <div class="yahoo-finance-container">
-                    <iframe id="yahooFinanceFrame" src="https://finance.yahoo.com/quote/{{ selected_ticker }}/"></iframe>
+                <div class="fund-details-card">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4>{{ fund_descriptions[selected_ticker] }} ({{ selected_ticker }})</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="alert alert-warning">
+                                        <strong>Note:</strong> Yahoo Finance cannot be directly embedded due to security restrictions. 
+                                        Please use the button below to view detailed information on Yahoo Finance.
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <a href="https://finance.yahoo.com/quote/{{ selected_ticker }}" target="_blank" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-bar-chart-fill"></i> View Complete Analysis on Yahoo Finance
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h5>Key Information</h5>
+                                    <div class="fund-metrics">
+                                        <div class="metric-card">
+                                            <div class="metric-title">Fund Category</div>
+                                            <div class="metric-value">
+                                                {% if selected_ticker in ["SWLVX", "SWTSX", "FSPGX"] %}
+                                                    Equity - Large Cap
+                                                {% elif selected_ticker in ["SWMCX", "VEXAX", "IJK"] %}
+                                                    Equity - Mid Cap
+                                                {% elif selected_ticker in ["VBR", "SWSSX", "FCPGX"] %}
+                                                    Equity - Small Cap
+                                                {% elif selected_ticker in ["FSHBX", "SJNK", "ISTB"] %}
+                                                    Fixed Income - Short Term
+                                                {% elif selected_ticker in ["FBNDX", "LSYAX", "VGIT"] %}
+                                                    Fixed Income - Intermediate Term
+                                                {% elif selected_ticker in ["VCLT", "JNK", "VGLT"] %}
+                                                    Fixed Income - Long Term
+                                                {% else %}
+                                                    Other
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">Provider</div>
+                                            <div class="metric-value">
+                                                {% if selected_ticker.startswith("SW") %}
+                                                    Schwab
+                                                {% elif selected_ticker.startswith("F") %}
+                                                    Fidelity
+                                                {% elif selected_ticker.startswith("V") %}
+                                                    Vanguard
+                                                {% elif selected_ticker == "JNK" or selected_ticker == "JSMD" %}
+                                                    SPDR
+                                                {% elif selected_ticker == "LSYAX" %}
+                                                    Lord Abbett
+                                                {% elif selected_ticker == "SJNK" %}
+                                                    SPDR
+                                                {% elif selected_ticker == "ISTB" %}
+                                                    iShares
+                                                {% else %}
+                                                    Various
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p class="disclaimer mt-4">
+                                To view current performance data, expense ratios, holdings, and other detailed metrics, 
+                                please visit Yahoo Finance using the button above.
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 {% else %}
                 <div class="alert alert-secondary">
